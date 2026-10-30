@@ -32,6 +32,18 @@ sensitive bucket writes need the bare bucket ARN as well as object ARNs.
 The removed ReadMultiple endpoint has no production caller in the deployed
 2024-11 source; mixed-version operation still requires an upgrade rehearsal.
 
+## Remaining release review
+
+The initial candidate does not yet close the full current advisory ledger.
+Before production promotion, finish the later replication-trust corrections
+(SN-2026-008), SSE-C attribute checks (007), explicit-version delete authorization
+(010), durable IAM revocation and delegated-admin boundaries (013/017), retention
+and overwrite authorization (015/016), and evaluate the console sharing proxy
+(014), forwarding trust (018), and notification/config redaction (019). Record
+applicability and patch evidence explicitly; a clean dependency scan is not proof
+that these server-logic findings are fixed. The primary CVE patch inventory above
+must not be reported as complete remediation or as a deployed release.
+
 ## Build and promotion
 
 The private CI repository accepts an explicit 40-character source commit and
