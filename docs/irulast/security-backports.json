@@ -393,6 +393,15 @@
         "internal/config/notify/legacy.go"
       ],
       "adaptation": "Retain MinIO product name in migration errors."
+    },
+    {
+      "commit": "3196480da93ebe7583677e64848cc5afa4dada18",
+      "files": [
+        "cmd/auth-handler.go",
+        "cmd/object-handlers.go",
+        "cmd/bucket-object-lock.go"
+      ],
+      "adaptation": "SN-2026-015 retention authorization and governance-bypass portion only. SN-2026-016 overwrite/locking changes still require a separate multi-pool adaptation."
     }
   ],
   "shared_package": {
@@ -410,5 +419,14 @@
     "backport": "https://github.com/pgsty/silo-console/pull/56",
     "backport_commit": "56dfe455ac2f58fd19dc3cc9751248c382380d77",
     "adaptation": "Retain MinIO Console API and original HTTP client constructor."
+  },
+  "owned_redaction_fix": {
+    "advisory": "SN-2026-019",
+    "reason": "Referenced HasSensitiveKeys commit is unavailable and original MinIO uses help-schema metadata.",
+    "files": [
+      "internal/config/config.go",
+      "internal/config/credential_redaction_test.go"
+    ],
+    "behavior": "Credential-name fallback on redacted diagnostics/config/env responses; retain authorized raw recovery exports."
   }
 }

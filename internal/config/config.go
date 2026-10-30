@@ -481,26 +481,34 @@ func (c Config) ReadConfig(r io.Reader) (dynOnly bool, err error) {
 	return dynOnly, nil
 }
 
-// RedactSensitiveInfo - removes sensitive information
-// like urls and credentials from the configuration
+// credentialConfigKey provides a conservative credential classification for
+// legacy or incompletely registered schemas. Keep these values private even
+// when their help entry has not supplied the Secret/Sensitive flags.
+func credentialConfigKey(key string) bool {
+	switch strings.ToLower(key) {
+	case "password", "auth_token", "secret_key", "client_secret", "nkey_seed",
+		"user_credentials", "sasl_password", "connection_string", "dsn_string",
+		"minio_notify_nats_user_credentials":
+		return true
+	}
+	return false
+}
+
+// RedactSensitiveInfo removes sensitive information from a copy of the config.
+// Raw authorized configuration exports retain their separate, unredacted path.
 func (c Config) RedactSensitiveInfo() Config {
 	nc := c.Clone()
-
 	for configName, configVals := range nc {
-		for _, helpKV := range HelpSubSysMap[configName] {
-			if helpKV.Sensitive {
-				for name, kvs := range configVals {
-					for i := range kvs {
-						if kvs[i].Key == helpKV.Key && len(kvs[i].Value) > 0 {
-							kvs[i].Value = "*redacted*"
-						}
-					}
-					configVals[name] = kvs
+		for name, kvs := range configVals {
+			for i := range kvs {
+				help, _ := HelpSubSysMap[configName].Lookup(kvs[i].Key)
+				if kvs[i].Value != "" && (help.Sensitive || help.Secret || credentialConfigKey(kvs[i].Key)) {
+					kvs[i].Value = "*redacted*"
 				}
 			}
+			configVals[name] = kvs
 		}
 	}
-
 	return nc
 }
 
@@ -1235,7 +1243,7 @@ func (c Config) ResolveConfigParam(subSys, target, cfgParam string, redactSecret
 		// If the configuration parameter is a secret, make sure to redact it when
 		// we return.
 		helpKV, _ := HelpSubSysMap[subSys].Lookup(cfgParam)
-		if helpKV.Secret {
+		if helpKV.Secret || credentialConfigKey(cfgParam) {
 			defer func() {
 				value = ""
 				isRedacted = true
@@ -1341,7 +1349,7 @@ func (c Config) getTargetKVS(subSys, target string, redactSecrets bool) KVS {
 	hkvs := HelpSubSysMap[subSys]
 	for _, kv := range store[target] {
 		hkv, _ := hkvs.Lookup(kv.Key)
-		if hkv.Secret && redactSecrets && kv.Value != "" {
+		if (hkv.Secret || credentialConfigKey(kv.Key)) && redactSecrets && kv.Value != "" {
 			// Skip returning secrets.
 			continue
 			// clonedKV := kv
@@ -1369,7 +1377,7 @@ func (c Config) getTargetEnvs(subSys, target string, defKVS KVS, redactSecrets b
 		}
 		if envPair.Value != "" {
 			hkv, _ := hkvs.Lookup(kv.Key)
-			if hkv.Secret && redactSecrets {
+			if (hkv.Secret || credentialConfigKey(kv.Key)) && redactSecrets {
 				// Skip adding any secret to the returned value.
 				continue
 				// envPair.Value = redactedSecret

@@ -47,15 +47,20 @@ replication-trust corrections (008), explicit-version delete authorization (010)
 and delegated-admin boundaries (017), including their compatibility follow-ups.
 It also validates bare-ARN policies on writes (005). These additions still need
 their own successful CI run. Before production promotion, finish durable IAM
-revocation (013), retention and overwrite authorization (015/016), and validate
-the owned console sharing-proxy backport (014). Forwarding trust (018) is backported and the
+revocation (013), overwrite protection (016), and validate
+the owned console sharing-proxy backport (014). The retention-authorization
+repair (015) now checks the requested retention action before reading state and
+requires a separate bypass permission when weakening active governance retention.
+The overwrite repair (016) is still blocked on its multi-pool locking adaptation. Forwarding trust (018) is backported and the
 owned image defaults to `MINIO_API_TRUSTED_PROXIES=none`: client IP attribution
 uses the TCP peer. Audit IP-based policies before promotion; forwarding clients
 require an explicit, narrow proxy allowlist. Notification registration and
 validation-error redaction (019) are backported, including the legacy database
-migration guard. The advisory also references a missing `HasSensitiveKeys`
-implementation; our original source uses help-schema classifications, whose
-credential coverage still needs review. Record
+migration guard. The advisory also references an unavailable `HasSensitiveKeys`
+implementation. Our original source uses help-schema classifications; an owned
+credential-key fallback now covers the documented keys and the legacy NATS name
+in redacted diagnostics, config responses and environment responses, without
+changing authorized unredacted recovery exports. Record
 applicability and patch evidence explicitly; a clean dependency scan is not proof
 that these server-logic findings are fixed. The primary CVE patch inventory above
 must not be reported as complete remediation or as a deployed release.
