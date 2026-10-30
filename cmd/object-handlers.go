@@ -356,6 +356,18 @@ func (api objectAPIHandlers) getObjectHandler(ctx context.Context, objectAPI Obj
 		writeErrorResponse(ctx, w, errorCodes.ToAPIErr(s3Error), r.URL)
 		return
 	}
+	if hasReplicationMarkerHeader(r.Header) {
+		trusted := hasReplicationMarker(r.Header) &&
+			replicationPermissionAllowed(ctx, r, bucket, object, policy.ReplicateObjectAction)
+		ctx, r = applyReplicationTrust(ctx, r, trusted, trusted)
+		if trusted {
+			opts, err = getOpts(ctx, r, bucket, object)
+			if err != nil {
+				writeErrorResponse(ctx, w, toAPIError(ctx, err), r.URL)
+				return
+			}
+		}
+	}
 
 	getObjectNInfo := objectAPI.GetObjectNInfo
 
@@ -494,8 +506,8 @@ func (api objectAPIHandlers) getObjectHandler(ctx context.Context, objectAPI Obj
 	}
 
 	// filter object lock metadata if permission does not permit
-	getRetPerms := checkRequestAuthType(ctx, r, policy.GetObjectRetentionAction, bucket, object)
-	legalHoldPerms := checkRequestAuthType(ctx, r, policy.GetObjectLegalHoldAction, bucket, object)
+	getRetPerms := authorizeRequest(ctx, r, policy.GetObjectRetentionAction)
+	legalHoldPerms := authorizeRequest(ctx, r, policy.GetObjectLegalHoldAction)
 
 	// filter object lock metadata if permission does not permit
 	objInfo.UserDefined = objectlock.FilterObjectLockMetadata(objInfo.UserDefined, getRetPerms != ErrNone, legalHoldPerms != ErrNone)
@@ -599,10 +611,16 @@ func (api objectAPIHandlers) getObjectAttributesHandler(ctx context.Context, obj
 		writeErrorResponse(ctx, w, errorCodes.ToAPIErr(s3Error), r.URL)
 		return
 	}
+	if hasReplicationMarkerHeader(r.Header) {
+		trusted := hasReplicationMarker(r.Header) &&
+			replicationPermissionAllowed(ctx, r, bucket, object, policy.ReplicateObjectAction)
+		ctx, r = applyReplicationTrust(ctx, r, trusted, trusted)
+		opts.ReplicationRequest = trusted
+	}
 
 	objInfo, err := objectAPI.GetObjectInfo(ctx, bucket, object, opts)
 	if err != nil {
-		s3Error = checkRequestAuthType(ctx, r, policy.ListBucketAction, bucket, object)
+		s3Error = authorizeRequest(ctx, r, policy.ListBucketAction)
 		if s3Error == ErrNone {
 			writeErrorResponse(ctx, w, toAPIError(ctx, err), r.URL)
 			return
@@ -618,6 +636,15 @@ func (api objectAPIHandlers) getObjectAttributesHandler(ctx context.Context, obj
 
 	if checkPreconditions(ctx, w, r, objInfo, opts) {
 		return
+	}
+	// Only a caller authorized to replicate this object may read SSE-C
+	// attributes without presenting the customer key. The header alone is
+	// client controlled, so it cannot stand in for that authorization.
+	if crypto.SSEC.IsEncrypted(objInfo.UserDefined) && !isReplicaTrusted(ctx) {
+		if _, err = crypto.SSEC.UnsealObjectKey(r.Header, objInfo.UserDefined, bucket, object); err != nil {
+			writeErrorResponse(ctx, w, toAPIError(ctx, err), r.URL)
+			return
+		}
 	}
 
 	OA := new(getObjectAttributesResponse)
@@ -789,6 +816,18 @@ func (api objectAPIHandlers) headObjectHandler(ctx context.Context, objectAPI Ob
 		writeErrorResponseHeadersOnly(w, errorCodes.ToAPIErr(s3Error))
 		return
 	}
+	if hasReplicationMarkerHeader(r.Header) {
+		trusted := hasReplicationMarker(r.Header) &&
+			replicationPermissionAllowed(ctx, r, bucket, object, policy.ReplicateObjectAction)
+		ctx, r = applyReplicationTrust(ctx, r, trusted, trusted)
+		if trusted {
+			opts, err = getOpts(ctx, r, bucket, object)
+			if err != nil {
+				writeErrorResponseHeadersOnly(w, toAPIError(ctx, err))
+				return
+			}
+		}
+	}
 
 	// Get request range.
 	var rs *HTTPRangeSpec
@@ -900,8 +939,8 @@ func (api objectAPIHandlers) headObjectHandler(ctx context.Context, objectAPI Ob
 	}
 
 	// filter object lock metadata if permission does not permit
-	getRetPerms := checkRequestAuthType(ctx, r, policy.GetObjectRetentionAction, bucket, object)
-	legalHoldPerms := checkRequestAuthType(ctx, r, policy.GetObjectLegalHoldAction, bucket, object)
+	getRetPerms := authorizeRequest(ctx, r, policy.GetObjectRetentionAction)
+	legalHoldPerms := authorizeRequest(ctx, r, policy.GetObjectLegalHoldAction)
 
 	// filter object lock metadata if permission does not permit
 	objInfo.UserDefined = objectlock.FilterObjectLockMetadata(objInfo.UserDefined, getRetPerms != ErrNone, legalHoldPerms != ErrNone)
@@ -927,10 +966,12 @@ func (api objectAPIHandlers) headObjectHandler(ctx context.Context, objectAPI Ob
 			w.Header().Set(xhttp.AmzServerSideEncryptionKmsContext, kmsCtx)
 		}
 	case crypto.SSEC:
-		// Validate the SSE-C Key set in the header.
-		if _, err = crypto.SSEC.UnsealObjectKey(r.Header, objInfo.UserDefined, bucket, object); err != nil {
-			writeErrorResponseHeadersOnly(w, toAPIError(ctx, err))
-			return
+		if !isReplicaTrusted(ctx) {
+			// Validate the SSE-C Key set in the header for ordinary reads.
+			if _, err = crypto.SSEC.UnsealObjectKey(r.Header, objInfo.UserDefined, bucket, object); err != nil {
+				writeErrorResponseHeadersOnly(w, toAPIError(ctx, err))
+				return
+			}
 		}
 		w.Header().Set(xhttp.AmzServerSideEncryptionCustomerAlgorithm, r.Header.Get(xhttp.AmzServerSideEncryptionCustomerAlgorithm))
 		w.Header().Set(xhttp.AmzServerSideEncryptionCustomerKeyMD5, r.Header.Get(xhttp.AmzServerSideEncryptionCustomerKeyMD5))
@@ -1082,31 +1123,6 @@ func getCpObjMetadataFromHeader(ctx context.Context, r *http.Request, userMeta m
 	return defaultMeta, nil
 }
 
-func cloneRequestWithoutCopyReplicationHeaders(r *http.Request) *http.Request {
-	if r == nil {
-		return nil
-	}
-
-	clone := new(http.Request)
-	*clone = *r
-	clone.Header = r.Header.Clone()
-
-	for _, header := range []string{
-		xhttp.MinIOSourceReplicationRequest,
-		xhttp.MinIOSourceETag,
-		xhttp.MinIOSourceMTime,
-		xhttp.MinIOSourceTaggingTimestamp,
-		xhttp.MinIOSourceObjectRetentionTimestamp,
-		xhttp.MinIOSourceObjectLegalHoldTimestamp,
-		xhttp.MinIOReplicationActualObjectSize,
-		ReplicationSsecChecksumHeader,
-	} {
-		clone.Header.Del(header)
-	}
-
-	return clone
-}
-
 // getRemoteInstanceTransport contains a roundtripper for external (not peers) servers
 var remoteInstanceTransport atomic.Value
 
@@ -1253,28 +1269,23 @@ func (api objectAPIHandlers) CopyObjectHandler(w http.ResponseWriter, r *http.Re
 		writeErrorResponse(ctx, w, errorCodes.ToAPIErr(ErrInvalidStorageClass), r.URL)
 		return
 	}
-	allowReplicationMetadata := false
-	if r.Header.Get(xhttp.AmzBucketReplicationStatus) == replication.Replica.String() {
-		if s3Error := checkRequestAuthType(ctx, r, policy.ReplicateObjectAction, dstBucket, dstObject); s3Error != ErrNone {
-			writeErrorResponse(ctx, w, errorCodes.ToAPIErr(s3Error), r.URL)
-			return
-		}
-		allowReplicationMetadata = true
+	trustedReplication, replicaTrusted, trustErr := evaluateReplicationTrust(ctx, r, dstBucket, dstObject, policy.ReplicateObjectAction)
+	if trustErr != ErrNone {
+		writeErrorResponse(ctx, w, errorCodes.ToAPIErr(trustErr), r.URL)
+		return
 	}
-	trustedReplicationRequest := allowReplicationMetadata && r.Header.Get(xhttp.MinIOSourceReplicationRequest) == "true"
-	optsReq := r
-	if !trustedReplicationRequest {
-		optsReq = cloneRequestWithoutCopyReplicationHeaders(r)
+	if hasReplicationRequestHeaders(r.Header) {
+		ctx, r = applyReplicationTrust(ctx, r, trustedReplication, replicaTrusted)
 	}
+	allowReplicationMetadata := replicaTrusted
 
 	// Check if bucket encryption is enabled
 	sseConfig, _ := globalBucketSSEConfigSys.Get(dstBucket)
 	sseConfig.Apply(r.Header, sse.ApplyOptions{
 		AutoEncrypt: globalAutoEncryption,
 	})
-
 	var srcOpts, dstOpts ObjectOptions
-	srcOpts, err = copySrcOpts(ctx, optsReq, srcBucket, srcObject)
+	srcOpts, err = copySrcOpts(ctx, r, srcBucket, srcObject)
 	if err != nil {
 		writeErrorResponse(ctx, w, toAPIError(ctx, err), r.URL)
 		return
@@ -1286,14 +1297,14 @@ func (api objectAPIHandlers) CopyObjectHandler(w http.ResponseWriter, r *http.Re
 		VersionID:          srcOpts.VersionID,
 		Versioned:          srcOpts.Versioned,
 		VersionSuspended:   srcOpts.VersionSuspended,
-		ReplicationRequest: trustedReplicationRequest,
+		ReplicationRequest: replicaTrusted,
 	}
 	getSSE := encrypt.SSE(srcOpts.ServerSideEncryption)
 	if getSSE != srcOpts.ServerSideEncryption {
 		getOpts.ServerSideEncryption = getSSE
 	}
 
-	dstOpts, err = copyDstOpts(ctx, optsReq, dstBucket, dstObject, nil)
+	dstOpts, err = copyDstOpts(ctx, r, dstBucket, dstObject, nil)
 	if err != nil {
 		writeErrorResponse(ctx, w, toAPIError(ctx, err), r.URL)
 		return
@@ -1303,7 +1314,7 @@ func (api objectAPIHandlers) CopyObjectHandler(w http.ResponseWriter, r *http.Re
 	getObjectNInfo := objectAPI.GetObjectNInfo
 
 	checkCopyPrecondFn := func(o ObjectInfo) bool {
-		if _, err := DecryptObjectInfo(&o, optsReq); err != nil {
+		if _, err := DecryptObjectInfo(&o, r); err != nil {
 			writeErrorResponse(ctx, w, toAPIError(ctx, err), r.URL)
 			return true
 		}
@@ -1414,7 +1425,7 @@ func (api objectAPIHandlers) CopyObjectHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 	// Encryption parameters not present for this object.
-	if crypto.SSEC.IsEncrypted(srcInfo.UserDefined) && !crypto.SSECopy.IsRequested(r.Header) && !trustedReplicationRequest {
+	if crypto.SSEC.IsEncrypted(srcInfo.UserDefined) && !crypto.SSECopy.IsRequested(r.Header) && !replicaTrusted {
 		writeErrorResponse(ctx, w, errorCodes.ToAPIErr(ErrInvalidSSECustomerAlgorithm), r.URL)
 		return
 	}
@@ -1621,7 +1632,7 @@ func (api objectAPIHandlers) CopyObjectHandler(w http.ResponseWriter, r *http.Re
 	getObjectInfo := objectAPI.GetObjectInfo
 
 	// apply default bucket configuration/governance headers for dest side.
-	retentionMode, retentionDate, legalHold, s3Err := checkPutObjectLockAllowed(ctx, r, dstBucket, dstObject, getObjectInfo, retPerms, holdPerms)
+	retentionMode, retentionDate, legalHold, s3Err := checkPutObjectLockAllowed(ctx, r, dstBucket, dstObject, getObjectInfo, retPerms, holdPerms, replicaTrusted)
 	if s3Err == ErrNone && retentionMode.Valid() {
 		lastretentionTimestamp := srcInfo.UserDefined[ReservedMetadataPrefixLower+ObjectLockRetentionTimestamp]
 		if dstOpts.ReplicationRequest {
@@ -1956,6 +1967,11 @@ func (api objectAPIHandlers) PutObjectHandler(w http.ResponseWriter, r *http.Req
 		}
 	}
 
+	trustedReplication, replicaTrusted, trustErr := evaluateReplicationTrust(ctx, r, bucket, object, policy.ReplicateObjectAction)
+	if trustErr != ErrNone {
+		writeErrorResponse(ctx, w, errorCodes.ToAPIErr(trustErr), r.URL)
+		return
+	}
 	if _, ok := r.Header[xhttp.MinIOSourceReplicationCheck]; ok {
 		// requests to just validate replication settings and permissions are not allowed to write data
 		writeErrorResponse(ctx, w, errorCodes.ToAPIErr(ErrReplicationPermissionCheckError), r.URL)
@@ -1966,18 +1982,20 @@ func (api objectAPIHandlers) PutObjectHandler(w http.ResponseWriter, r *http.Req
 		writeErrorResponse(ctx, w, toAPIError(ctx, err), r.URL)
 		return
 	}
-	if r.Header.Get(xhttp.AmzBucketReplicationStatus) == replication.Replica.String() {
-		if s3Err = isPutActionAllowed(ctx, getRequestAuthType(r), bucket, object, r, policy.ReplicateObjectAction); s3Err != ErrNone {
-			writeErrorResponse(ctx, w, errorCodes.ToAPIErr(s3Err), r.URL)
-			return
-		}
+	if hasReplicationRequestHeaders(r.Header) {
+		ctx, r = applyReplicationTrust(ctx, r, trustedReplication, replicaTrusted)
+	}
+	if replicaTrusted {
 		if err = extractReplicationMetadataFromMime(ctx, textproto.MIMEHeader(r.Header), metadata); err != nil {
 			writeErrorResponse(ctx, w, toAPIError(ctx, err), r.URL)
 			return
 		}
+		metadata[xhttp.AmzBucketReplicationStatus] = replication.Replica.String()
 		metadata[ReservedMetadataPrefixLower+ReplicaStatus] = replication.Replica.String()
 		metadata[ReservedMetadataPrefixLower+ReplicaTimestamp] = UTCNow().Format(time.RFC3339Nano)
 		defer globalReplicationStats.Load().UpdateReplicaStat(bucket, size)
+	} else {
+		delete(metadata, xhttp.AmzBucketReplicationStatus)
 	}
 
 	// Check if bucket encryption is enabled
@@ -2076,7 +2094,7 @@ func (api objectAPIHandlers) PutObjectHandler(w http.ResponseWriter, r *http.Req
 
 	getObjectInfo := objectAPI.GetObjectInfo
 
-	retentionMode, retentionDate, legalHold, s3Err := checkPutObjectLockAllowed(ctx, r, bucket, object, getObjectInfo, retPerms, holdPerms)
+	retentionMode, retentionDate, legalHold, s3Err := checkPutObjectLockAllowed(ctx, r, bucket, object, getObjectInfo, retPerms, holdPerms, isReplicaTrusted(ctx))
 	if s3Err == ErrNone && retentionMode.Valid() {
 		metadata[strings.ToLower(xhttp.AmzObjectLockMode)] = string(retentionMode)
 		metadata[strings.ToLower(xhttp.AmzObjectLockRetainUntilDate)] = amztime.ISO8601Format(retentionDate.UTC())
@@ -2360,7 +2378,6 @@ func (api objectAPIHandlers) PutObjectExtractHandler(w http.ResponseWriter, r *h
 			sha256hex = getContentSha256Cksum(r, serviceS3)
 		}
 	}
-
 	hreader, err := hash.NewReader(ctx, reader, size, md5hex, sha256hex, size)
 	if err != nil {
 		writeErrorResponse(ctx, w, toAPIError(ctx, err), r.URL)
@@ -2381,14 +2398,26 @@ func (api objectAPIHandlers) PutObjectExtractHandler(w http.ResponseWriter, r *h
 	sseConfig.Apply(r.Header, sse.ApplyOptions{
 		AutoEncrypt: globalAutoEncryption,
 	})
+	entryRequestBase := r.Clone(ctx)
+	// The streaming reader fills r.Trailer while untar writes small entries in
+	// parallel. Entry authorization never consumes trailers, so keep them out
+	// of the immutable request template cloned by those goroutines. Snapshot
+	// after applying bucket defaults so extracted objects retain encryption.
+	entryRequestBase.Trailer = nil
+	rawReplica := hasReplicaStatus(r.Header)
+	markerExact := hasReplicationMarker(r.Header)
+	trustedRequestCtx := withReplicationTrust(ctx, true, rawReplica)
+	trustedRequest := entryRequestBase.WithContext(trustedRequestCtx)
+	cleanRequestCtx := withReplicationTrust(ctx, false, false)
+	cleanRequest := cloneRequestWithoutReplicationHeaders(cleanRequestCtx, entryRequestBase)
+	trustedReqParams := extractReqParams(trustedRequest)
+	cleanReqParams := extractReqParams(cleanRequest)
 
 	retPerms := isPutActionAllowed(ctx, getRequestAuthType(r), bucket, object, r, policy.PutObjectRetentionAction)
 	holdPerms := isPutActionAllowed(ctx, getRequestAuthType(r), bucket, object, r, policy.PutObjectLegalHoldAction)
 
 	getObjectInfo := objectAPI.GetObjectInfo
 
-	// These are static for all objects extracted.
-	reqParams := extractReqParams(r)
 	respElements := map[string]string{
 		"requestId": w.Header().Get(xhttp.AmzRequestID),
 		"nodeId":    w.Header().Get(xhttp.AmzRequestHostID),
@@ -2396,12 +2425,46 @@ func (api objectAPIHandlers) PutObjectExtractHandler(w http.ResponseWriter, r *h
 	if sc == "" {
 		sc = storageclass.STANDARD
 	}
+	reqInfo := logger.GetReqInfo(ctx)
+	if reqInfo == nil {
+		writeErrorResponse(ctx, w, errorCodes.ToAPIErr(ErrAccessDenied), r.URL)
+		return
+	}
+	reqInfo.RLock()
+	tarCred := reqInfo.Cred
+	tarOwner := reqInfo.Owner
+	reqInfo.RUnlock()
+	var tarS3Err atomic.Int32
+	setTarS3Err := func(code APIErrorCode) {
+		tarS3Err.CompareAndSwap(int32(ErrNone), int32(code))
+	}
+	ignoreEntryErrors := opts.ignoreErrs
 
 	putObjectTar := func(reader io.Reader, info os.FileInfo, object string) error {
 		size := info.Size()
-		if s3Err = isPutActionAllowed(ctx, getRequestAuthType(r), bucket, object, r, policy.PutObjectAction); s3Err != ErrNone {
-			writeErrorResponse(ctx, w, errorCodes.ToAPIErr(s3Err), r.URL)
-			return errors.New(errorCodes.ToAPIErr(s3Err).Code)
+		entryAuthReq := entryRequestBase.Clone(ctx)
+		entryS3Err := isPutActionAllowedWithCred(bucket, object, entryAuthReq, policy.PutObjectAction, nil, tarCred, tarOwner)
+		if entryS3Err != ErrNone {
+			setTarS3Err(entryS3Err)
+			return errors.New(errorCodes.ToAPIErr(entryS3Err).Code)
+		}
+		replicationPermitted := false
+		if tarCred.AccessKey != "" && (rawReplica || markerExact) {
+			replicationPermitted = isPutActionAllowedWithCred(bucket, object, entryAuthReq, policy.ReplicateObjectAction, nil, tarCred, tarOwner) == ErrNone
+		}
+		if rawReplica && !replicationPermitted {
+			setTarS3Err(ErrAccessDenied)
+			return errors.New(errorCodes.ToAPIErr(ErrAccessDenied).Code)
+		}
+		entryTrusted := markerExact && replicationPermitted
+		replicaTrusted := entryTrusted && rawReplica
+		entryCtx := cleanRequestCtx
+		entryReq := cloneRequestWithoutReplicationHeaders(cleanRequestCtx, entryAuthReq)
+		reqParams := cleanReqParams
+		if entryTrusted {
+			entryCtx = trustedRequestCtx
+			entryReq = entryAuthReq.WithContext(trustedRequestCtx)
+			reqParams = trustedReqParams
 		}
 		metadata := map[string]string{
 			xhttp.AmzStorageClass: sc, // save same storage-class as incoming stream.
@@ -2409,7 +2472,7 @@ func (api objectAPIHandlers) PutObjectExtractHandler(w http.ResponseWriter, r *h
 
 		actualSize := size
 		var idxCb func() []byte
-		if isCompressible(r.Header, object) && size > minCompressibleSize {
+		if isCompressible(entryReq.Header, object) && size > minCompressibleSize {
 			// Storing the compression metadata.
 			metadata[ReservedMetadataPrefix+"compression"] = compressionAlgorithmV2
 			metadata[ReservedMetadataPrefix+"actual-size"] = strconv.FormatInt(size, 10)
@@ -2420,7 +2483,7 @@ func (api objectAPIHandlers) PutObjectExtractHandler(w http.ResponseWriter, r *h
 			}
 
 			// Set compression metrics.
-			wantEncryption := crypto.Requested(r.Header)
+			wantEncryption := crypto.Requested(entryReq.Header)
 			s2c, cb := newS2CompressReader(actualReader, actualSize, wantEncryption)
 			defer s2c.Close()
 			idxCb = cb
@@ -2436,15 +2499,11 @@ func (api objectAPIHandlers) PutObjectExtractHandler(w http.ResponseWriter, r *h
 		rawReader := hashReader
 		pReader := NewPutObjReader(rawReader)
 
-		allowReplicationMetadata := false
-		if r.Header.Get(xhttp.AmzBucketReplicationStatus) == replication.Replica.String() {
-			if s3Err = isPutActionAllowed(ctx, getRequestAuthType(r), bucket, object, r, policy.ReplicateObjectAction); s3Err != ErrNone {
-				return errors.New(errorCodes.ToAPIErr(s3Err).Code)
-			}
-			allowReplicationMetadata = true
-			if err = extractReplicationMetadataFromMime(ctx, textproto.MIMEHeader(r.Header), metadata); err != nil {
+		if replicaTrusted {
+			if err := extractReplicationMetadataFromMime(entryCtx, textproto.MIMEHeader(entryReq.Header), metadata); err != nil {
 				return err
 			}
+			metadata[xhttp.AmzBucketReplicationStatus] = replication.Replica.String()
 			metadata[ReservedMetadataPrefixLower+ReplicaStatus] = replication.Replica.String()
 			metadata[ReservedMetadataPrefixLower+ReplicaTimestamp] = UTCNow().Format(time.RFC3339Nano)
 		}
@@ -2466,22 +2525,25 @@ func (api objectAPIHandlers) PutObjectExtractHandler(w http.ResponseWriter, r *h
 					hdrs.Set(k, v)
 				}
 			}
-			m, err := extractMetadata(ctx, textproto.MIMEHeader(hdrs))
+			if !entryTrusted {
+				stripReplicationRequestHeaders(hdrs)
+			}
+			m, err := extractMetadata(entryCtx, textproto.MIMEHeader(hdrs))
 			if err != nil {
 				return err
 			}
-			if allowReplicationMetadata {
-				if err = extractReplicationMetadataFromMime(ctx, textproto.MIMEHeader(hdrs), m); err != nil {
+			if replicaTrusted {
+				if err = extractReplicationMetadataFromMime(entryCtx, textproto.MIMEHeader(hdrs), m); err != nil {
 					return err
 				}
 			}
 			maps.Copy(metadata, m)
 		} else {
-			versionID = r.Form.Get(xhttp.VersionID)
-			hdrs = r.Header
+			versionID = entryReq.Form.Get(xhttp.VersionID)
+			hdrs = entryReq.Header
 		}
 
-		opts, err := putOpts(ctx, bucket, object, versionID, hdrs, metadata)
+		opts, err := putOpts(entryCtx, bucket, object, versionID, hdrs, metadata, entryTrusted)
 		if err != nil {
 			return err
 		}
@@ -2492,7 +2554,7 @@ func (api objectAPIHandlers) PutObjectExtractHandler(w http.ResponseWriter, r *h
 		}
 		opts.IndexCB = idxCb
 
-		retentionMode, retentionDate, legalHold, s3err := checkPutObjectLockAllowed(ctx, r, bucket, object, getObjectInfo, retPerms, holdPerms)
+		retentionMode, retentionDate, legalHold, s3err := checkPutObjectLockAllowed(entryCtx, entryReq, bucket, object, getObjectInfo, retPerms, holdPerms, replicaTrusted)
 		if s3err == ErrNone && retentionMode.Valid() {
 			metadata[strings.ToLower(xhttp.AmzObjectLockMode)] = string(retentionMode)
 			metadata[strings.ToLower(xhttp.AmzObjectLockRetainUntilDate)] = amztime.ISO8601Format(retentionDate.UTC())
@@ -2503,7 +2565,9 @@ func (api objectAPIHandlers) PutObjectExtractHandler(w http.ResponseWriter, r *h
 		}
 
 		if s3err != ErrNone {
-			s3Err = s3err
+			if !ignoreEntryErrors {
+				setTarS3Err(s3err)
+			}
 			return ObjectLocked{}
 		}
 
@@ -2513,12 +2577,12 @@ func (api objectAPIHandlers) PutObjectExtractHandler(w http.ResponseWriter, r *h
 		}
 
 		var objectEncryptionKey crypto.ObjectKey
-		if crypto.Requested(r.Header) {
-			if crypto.SSECopy.IsRequested(r.Header) {
+		if crypto.Requested(entryReq.Header) {
+			if crypto.SSECopy.IsRequested(entryReq.Header) {
 				return errInvalidEncryptionParameters
 			}
 
-			reader, objectEncryptionKey, err = EncryptRequest(hashReader, r, bucket, object, metadata)
+			reader, objectEncryptionKey, err = EncryptRequest(hashReader, entryReq, bucket, object, metadata)
 			if err != nil {
 				return err
 			}
@@ -2563,7 +2627,7 @@ func (api objectAPIHandlers) PutObjectExtractHandler(w http.ResponseWriter, r *h
 		}
 
 		origETag := objInfo.ETag
-		objInfo.ETag = getDecryptedETag(r.Header, objInfo, false)
+		objInfo.ETag = getDecryptedETag(entryReq.Header, objInfo, false)
 
 		if dsc := mustReplicate(ctx, bucket, object, getMustReplicateOptions(metadata, "", "", replication.ObjectReplicationType, opts)); dsc.ReplicateAny() {
 			scheduleReplication(ctx, objInfo, objectAPI, dsc, replication.ObjectReplicationType)
@@ -2576,8 +2640,8 @@ func (api objectAPIHandlers) PutObjectExtractHandler(w http.ResponseWriter, r *h
 			Object:       objInfo,
 			ReqParams:    reqParams,
 			RespElements: respElements,
-			UserAgent:    r.UserAgent(),
-			Host:         handlers.GetSourceIP(r),
+			UserAgent:    entryReq.UserAgent(),
+			Host:         handlers.GetSourceIP(entryReq),
 		}
 		sendEvent(evt)
 
@@ -2592,7 +2656,14 @@ func (api objectAPIHandlers) PutObjectExtractHandler(w http.ResponseWriter, r *h
 		return nil
 	}
 
-	if err = untar(ctx, hreader, putObjectTar, opts); err != nil {
+	err = untar(ctx, hreader, putObjectTar, opts)
+	if code := APIErrorCode(tarS3Err.Load()); code != ErrNone {
+		s3Err = code
+		if err == nil {
+			err = errors.New(errorCodes.ToAPIErr(code).Code)
+		}
+	}
+	if err != nil {
 		apiErr := errorCodes.ToAPIErr(s3Err)
 		// If not set, convert or use BadRequest
 		if s3Err == ErrNone {
@@ -2637,7 +2708,29 @@ func (api objectAPIHandlers) DeleteObjectHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	if s3Error := checkRequestAuthType(ctx, r, policy.DeleteObjectAction, bucket, object); s3Error != ErrNone {
+	reqInfo := logger.GetReqInfo(ctx)
+	if reqInfo == nil {
+		writeErrorResponse(ctx, w, errorCodes.ToAPIErr(ErrAccessDenied), r.URL)
+		return
+	}
+	reqInfo.BucketName = bucket
+	reqInfo.ObjectName = object
+	if s3Error := authenticateRequest(ctx, r, policy.DeleteObjectAction); s3Error != ErrNone {
+		writeErrorResponse(ctx, w, errorCodes.ToAPIErr(s3Error), r.URL)
+		return
+	}
+	trustedReplication, replica, trustErr := evaluateReplicationTrust(ctx, r, bucket, object, policy.ReplicateDeleteAction)
+	if trustErr != ErrNone {
+		writeErrorResponse(ctx, w, errorCodes.ToAPIErr(trustErr), r.URL)
+		return
+	}
+	var s3Error APIErrorCode
+	if trustedReplication {
+		s3Error = authorizeReplicationDelete(ctx, r)
+	} else {
+		s3Error = authorizeRequest(ctx, r, deleteObjectAction(reqInfo.VersionID))
+	}
+	if s3Error != ErrNone {
 		writeErrorResponse(ctx, w, errorCodes.ToAPIErr(s3Error), r.URL)
 		return
 	}
@@ -2646,13 +2739,8 @@ func (api objectAPIHandlers) DeleteObjectHandler(w http.ResponseWriter, r *http.
 		writeErrorResponse(ctx, w, errorCodes.ToAPIErr(ErrReplicationPermissionCheckError), r.URL)
 		return
 	}
-
-	replica := r.Header.Get(xhttp.AmzBucketReplicationStatus) == replication.Replica.String()
-	if replica {
-		if s3Error := checkRequestAuthType(ctx, r, policy.ReplicateDeleteAction, bucket, object); s3Error != ErrNone {
-			writeErrorResponse(ctx, w, errorCodes.ToAPIErr(s3Error), r.URL)
-			return
-		}
+	if hasReplicationRequestHeaders(r.Header) {
+		ctx, r = applyReplicationTrust(ctx, r, trustedReplication, replica)
 	}
 
 	if globalDNSConfig != nil {

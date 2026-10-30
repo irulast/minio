@@ -263,6 +263,107 @@
         "cmd/encryption-v1.go",
         "cmd/erasure-object.go"
       ]
+    },
+    {
+      "commit": "eee05a17c34a07cebb27220d12697be74c8bd617",
+      "files": [
+        "cmd/admin-handlers-users.go"
+      ]
+    },
+    {
+      "commit": "474cd5801e4e242d27a68cd0ada8a477a86d42e1",
+      "files": [
+        "cmd/object-handlers.go"
+      ]
+    },
+    {
+      "commit": "21870fa2e7f345ae92ed05ac834b1bc55bee0ff8",
+      "files": [
+        "cmd/object-handlers.go"
+      ]
+    },
+    {
+      "commit": "74c97d005d6d5b74a2037636df33f40636672282",
+      "files": [
+        "cmd/object-handlers.go"
+      ]
+    },
+    {
+      "commit": "938603458d7af34ddf7d6a59b50a716e4cca13ba",
+      "files": [
+        "cmd/bucket-object-lock.go",
+        "cmd/encryption-v1.go",
+        "cmd/handler-utils.go",
+        "cmd/object-api-options.go",
+        "cmd/object-handlers.go",
+        "cmd/object-multipart-handlers.go",
+        "cmd/replication-trust.go",
+        "internal/bucket/object/lock/lock.go"
+      ],
+      "adaptation": "Omit Silo-only per-bucket CORS changes; retain MinIO global CORS behavior. Merge replication trust into original MinIO handlers without unrelated copy-encryption helpers."
+    },
+    {
+      "commit": "c9ad746732e1f1fd7140f83fc7b309a6b1e43126",
+      "files": [
+        "cmd/object-handlers.go"
+      ]
+    },
+    {
+      "commit": "ff44527a3ce7d39e4a9343ef4dc933b95198d94d",
+      "files": [
+        "cmd/auth-handler.go",
+        "cmd/object-handlers.go",
+        "cmd/replication-trust.go"
+      ]
+    },
+    {
+      "commit": "ab3ae99ca30c7abb0f20b68fb2e6af29ccc6d071",
+      "files": [
+        "cmd/object-handlers.go"
+      ]
+    },
+    {
+      "commit": "04b097fd9ff24c909a4cadde2b9b253b7b7ab847",
+      "files": [
+        "cmd/object-handlers.go",
+        "cmd/replication-trust.go"
+      ]
+    },
+    {
+      "commit": "75a6734e49524f6c4702c60e1cf7d038d2c0d0cf",
+      "files": [
+        "cmd/auth-handler.go",
+        "cmd/bucket-handlers.go",
+        "cmd/object-handlers.go"
+      ]
+    },
+    {
+      "commit": "dee2c3a02b4fd61739508eab29bf4f852048e416",
+      "files": [
+        "cmd/auth-handler.go",
+        "cmd/bucket-handlers.go"
+      ]
+    },
+    {
+      "commit": "76195f1c6809b1504d2ccdcc240e137eaf21dc9c",
+      "files": [
+        "cmd/object-handlers.go",
+        "cmd/object-multipart-handlers.go",
+        "cmd/replication-trust.go"
+      ]
+    },
+    {
+      "commit": "2616d43fbc3400a02cc1e6f9299e26ae8b2e71a6",
+      "files": [
+        "cmd/admin-handlers-idp-ldap.go",
+        "cmd/admin-handlers-users.go"
+      ]
+    },
+    {
+      "commit": "9954392605827b213877c45262c741e638598dd8",
+      "files": [
+        "cmd/admin-handlers-users.go"
+      ]
     }
   ],
   "shared_package": {

@@ -386,7 +386,7 @@ func TestParseObjectLockRetentionHeaders(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		_, _, err := ParseObjectLockRetentionHeaders(tt.header)
+		_, _, err := ParseObjectLockRetentionHeaders(tt.header, false)
 		//nolint:gocritic
 		if tt.expectedErr == nil {
 			if err != nil {
