@@ -24,8 +24,8 @@ import (
 	"io"
 	"maps"
 	"net/http"
+	"net/textproto"
 	"net/url"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -80,7 +80,12 @@ func (api objectAPIHandlers) NewMultipartUploadHandler(w http.ResponseWriter, r 
 		return
 	}
 
-	if s3Error := checkRequestAuthType(ctx, r, policy.PutObjectAction, bucket, object); s3Error != ErrNone {
+	requestTags, hasRequestTags := getRequestHeaderOrQueryValue(r, xhttp.AmzObjectTagging)
+	var requestTagsPtr *string
+	if hasRequestTags {
+		requestTagsPtr = &requestTags
+	}
+	if s3Error := checkRequestAuthTypeWithRequestTags(ctx, r, policy.PutObjectAction, bucket, object, requestTagsPtr); s3Error != ErrNone {
 		writeErrorResponse(ctx, w, errorCodes.ToAPIErr(s3Error), r.URL)
 		return
 	}
@@ -91,7 +96,8 @@ func (api objectAPIHandlers) NewMultipartUploadHandler(w http.ResponseWriter, r 
 		AutoEncrypt: globalAutoEncryption,
 	})
 
-	// Validate storage class metadata if present
+	// Validate the storage class header if present. Query values retain the
+	// existing compatibility path, including its historical validation behavior.
 	if sc := r.Header.Get(xhttp.AmzStorageClass); sc != "" {
 		if !storageclass.IsValid(sc) {
 			writeErrorResponse(ctx, w, errorCodes.ToAPIErr(ErrInvalidStorageClass), r.URL)
@@ -148,15 +154,21 @@ func (api objectAPIHandlers) NewMultipartUploadHandler(w http.ResponseWriter, r 
 		return
 	}
 
-	if objTags := r.Header.Get(xhttp.AmzObjectTagging); objTags != "" {
+	if objTags := metadata[xhttp.AmzObjectTagging]; objTags != "" {
 		if _, err := tags.ParseObjectTags(objTags); err != nil {
 			writeErrorResponse(ctx, w, toAPIError(ctx, err), r.URL)
 			return
 		}
-
-		metadata[xhttp.AmzObjectTagging] = objTags
 	}
 	if r.Header.Get(xhttp.AmzBucketReplicationStatus) == replication.Replica.String() {
+		if s3Err := isPutActionAllowed(ctx, getRequestAuthType(r), bucket, object, r, policy.ReplicateObjectAction); s3Err != ErrNone {
+			writeErrorResponse(ctx, w, errorCodes.ToAPIErr(s3Err), r.URL)
+			return
+		}
+		if err = extractReplicationMetadataFromMime(ctx, textproto.MIMEHeader(r.Header), metadata); err != nil {
+			writeErrorResponse(ctx, w, toAPIError(ctx, err), r.URL)
+			return
+		}
 		metadata[ReservedMetadataPrefixLower+ReplicaStatus] = replication.Replica.String()
 		metadata[ReservedMetadataPrefixLower+ReplicaTimestamp] = UTCNow().Format(time.RFC3339Nano)
 	}
@@ -685,8 +697,8 @@ func (api objectAPIHandlers) PutObjectPartHandler(w http.ResponseWriter, r *http
 			return
 		}
 	case authTypeStreamingUnsignedTrailer:
-		// Initialize stream signature verifier.
-		reader, s3Error = newUnsignedV4ChunkedReader(r, true, r.Header.Get(xhttp.Authorization) != "")
+		// Initialize stream chunked reader with optional trailers.
+		reader, s3Error = newUnsignedV4ChunkedReader(r, true)
 		if s3Error != ErrNone {
 			writeErrorResponse(ctx, w, errorCodes.ToAPIErr(s3Error), r.URL)
 			return
@@ -958,11 +970,15 @@ func (api objectAPIHandlers) CompleteMultipartUploadHandler(w http.ResponseWrite
 		return
 	}
 
-	if !sort.SliceIsSorted(complMultipartUpload.Parts, func(i, j int) bool {
-		return complMultipartUpload.Parts[i].PartNumber < complMultipartUpload.Parts[j].PartNumber
-	}) {
-		writeErrorResponse(ctx, w, errorCodes.ToAPIErr(ErrInvalidPartOrder), r.URL)
-		return
+	// The parts list must be strictly increasing by part number. Gaps are
+	// allowed, repeats are not - sort.SliceIsSorted() with a '<' predicate
+	// considers equal neighbors sorted, so it is checked explicitly here,
+	// before anything is assembled into the target object.
+	for i := 1; i < len(complMultipartUpload.Parts); i++ {
+		if complMultipartUpload.Parts[i-1].PartNumber >= complMultipartUpload.Parts[i].PartNumber {
+			writeErrorResponse(ctx, w, errorCodes.ToAPIErr(ErrInvalidPartOrder), r.URL)
+			return
+		}
 	}
 
 	// Reject retention or governance headers if set, CompleteMultipartUpload spec

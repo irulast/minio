@@ -363,7 +363,7 @@ func TestGetContentSha256Cksum(t *testing.T) {
 	}
 }
 
-// Test TestCheckMetaHeaders tests the logic of checkMetaHeaders() function
+// Test TestCheckMetaHeaders tests the logic of checkUnsignedHeaders() function
 func TestCheckMetaHeaders(t *testing.T) {
 	signedHeadersMap := map[string][]string{
 		"X-Amz-Meta-Test":      {"test"},
@@ -384,7 +384,7 @@ func TestCheckMetaHeaders(t *testing.T) {
 	inputHeader.Set("X-Amz-Meta-Extension", expectedMetaExtension)
 	inputHeader.Set("X-Amz-Meta-Name", expectedMetaName)
 	// calling the function being tested.
-	errCode := checkMetaHeaders(signedHeadersMap, r)
+	errCode := checkUnsignedHeaders(signedHeadersMap, r)
 	if errCode != ErrNone {
 		t.Fatalf("Expected the APIErrorCode to be %d, but got %d", ErrNone, errCode)
 	}
@@ -392,7 +392,7 @@ func TestCheckMetaHeaders(t *testing.T) {
 	// Add new metadata in inputHeader
 	inputHeader.Set("X-Amz-Meta-Clone", "fail")
 	// calling the function being tested.
-	errCode = checkMetaHeaders(signedHeadersMap, r)
+	errCode = checkUnsignedHeaders(signedHeadersMap, r)
 	if errCode != ErrUnsignedHeaders {
 		t.Fatalf("Expected the APIErrorCode to be %d, but got %d", ErrUnsignedHeaders, errCode)
 	}
@@ -400,7 +400,7 @@ func TestCheckMetaHeaders(t *testing.T) {
 	// Delete extra metadata from header to don't affect other test
 	inputHeader.Del("X-Amz-Meta-Clone")
 	// calling the function being tested.
-	errCode = checkMetaHeaders(signedHeadersMap, r)
+	errCode = checkUnsignedHeaders(signedHeadersMap, r)
 	if errCode != ErrNone {
 		t.Fatalf("Expected the APIErrorCode to be %d, but got %d", ErrNone, errCode)
 	}
@@ -413,7 +413,7 @@ func TestCheckMetaHeaders(t *testing.T) {
 
 	r.ParseForm()
 	// calling the function being tested.
-	errCode = checkMetaHeaders(signedHeadersMap, r)
+	errCode = checkUnsignedHeaders(signedHeadersMap, r)
 	if errCode != ErrNone {
 		t.Fatalf("Expected the APIErrorCode to be %d, but got %d", ErrNone, errCode)
 	}

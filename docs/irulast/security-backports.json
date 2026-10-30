@@ -1,0 +1,228 @@
+{
+  "upstream": "7aac2a2c5b7c882e68c1ce017d8256be2feea27f",
+  "reference": "https://github.com/pgsty/silo",
+  "production_backports": [
+    {
+      "commit": "377fc616d9c5944d9d0aff081089d2d0c4ebb12c",
+      "files": [
+        "cmd/bucket-replication-utils_gen.go",
+        "cmd/iam-object-store.go"
+      ]
+    },
+    {
+      "commit": "d24f449e089123210af06c51ee92ea2d51404a31",
+      "files": [
+        "internal/config/identity/openid/jwt.go",
+        "internal/config/identity/openid/openid.go"
+      ]
+    },
+    {
+      "commit": "3b950f8fa8576639c813c7aaeb60d93f9968ace5",
+      "files": [
+        "cmd/admin-handlers-idp-ldap.go",
+        "cmd/sts-handlers.go",
+        "internal/config/identity/ldap/ldap.go"
+      ]
+    },
+    {
+      "commit": "56fa63bfd155154157cd7e1fb6dc295a3b3104ed",
+      "files": [
+        "cmd/handler-utils.go",
+        "cmd/object-handlers.go",
+        "cmd/object-multipart-handlers.go"
+      ]
+    },
+    {
+      "commit": "3252d5b7f349e0ea41987761e4487972ea977e15",
+      "files": [
+        "internal/s3select/csv/errors.go",
+        "internal/s3select/csv/reader.go",
+        "internal/s3select/json/errors.go",
+        "internal/s3select/json/preader.go",
+        "internal/s3select/select.go"
+      ]
+    },
+    {
+      "commit": "f444b6f37e4494aa043b8786214c7c2c5703e5ff",
+      "files": [
+        "cmd/object-handlers.go",
+        "cmd/object-multipart-handlers.go",
+        "cmd/streaming-v4-unsigned.go"
+      ]
+    },
+    {
+      "commit": "efb6e5b00b03e189b44c0349efcee07d440ec428",
+      "files": [
+        "cmd/object-handlers.go"
+      ]
+    },
+    {
+      "commit": "18b712d49a689b40edf4ee7052b4eb223d700c40",
+      "files": [
+        "cmd/sts-handlers.go"
+      ]
+    },
+    {
+      "commit": "9e10f6d9a03c7d9e356251d55290d78c153a1159",
+      "files": [
+        "cmd/sts-handlers.go"
+      ]
+    },
+    {
+      "commit": "f44110890bebc5a126fff532d562154669be6dcb",
+      "files": [
+        "cmd/sts-handlers.go",
+        "internal/config/identity/ldap/config.go",
+        "internal/config/identity/ldap/help.go"
+      ]
+    },
+    {
+      "commit": "65795ee1f467cbf28a19244045b15abbab67fa13",
+      "files": [
+        "cmd/api-response.go"
+      ]
+    },
+    {
+      "commit": "5e40665acdc88f2508ab5a9033a8193daf62cfce",
+      "files": [
+        "cmd/sts-handlers.go",
+        "internal/config/identity/ldap/config.go"
+      ]
+    },
+    {
+      "commit": "fd69c89d05d3205fb237c9603c638668f83c857a",
+      "files": [
+        "internal/s3select/json/preader.go",
+        "internal/s3select/select.go"
+      ]
+    },
+    {
+      "commit": "73ac52472444e222c4cb345030d21ecabff876a8",
+      "files": [
+        "cmd/storage-datatypes.go",
+        "cmd/storage-datatypes_gen.go",
+        "cmd/storage-interface.go",
+        "cmd/storage-rest-client.go",
+        "cmd/storage-rest-common.go",
+        "cmd/storage-rest-server.go",
+        "cmd/storagemetric_string.go",
+        "cmd/xl-storage-disk-id-check.go",
+        "cmd/xl-storage.go"
+      ]
+    },
+    {
+      "commit": "c8590413fd321a315f3779cd9b2a6f1cb72064da",
+      "files": [
+        "cmd/erasure-multipart.go"
+      ]
+    },
+    {
+      "commit": "3e14733f1589998226909d30acbfc6bc793e1c10",
+      "files": [
+        "internal/hash/crc.go"
+      ]
+    },
+    {
+      "commit": "92471792691826b5225e9b17890047ef7c83080b",
+      "files": [
+        "cmd/erasure-decode.go"
+      ]
+    },
+    {
+      "commit": "89d346bf511d9dd6503c3defaf0db64b8158c48d",
+      "files": [
+        "cmd/update.go"
+      ]
+    },
+    {
+      "commit": "8069a32ac80bb91409270c5b510d3756d189f14a",
+      "files": [
+        "cmd/api-response.go"
+      ]
+    },
+    {
+      "commit": "a36fd8fffbfa6961ead1eed07567076202e33cf6",
+      "files": [
+        "internal/ioutil/ioutil.go"
+      ]
+    },
+    {
+      "commit": "ca7baa670d061f75aa79c153096410c8f72ee22b",
+      "files": [
+        "cmd/erasure-metadata.go",
+        "cmd/storage-rest-server-guard.go",
+        "cmd/storage-rest-server.go",
+        "cmd/xl-storage.go"
+      ]
+    },
+    {
+      "commit": "80e8eaa42322adcba3423e3f129d1f3b154363c5",
+      "files": [
+        "cmd/erasure-coding.go",
+        "cmd/erasure-metadata.go",
+        "cmd/erasure-server-pool-rebalance.go",
+        "cmd/xl-storage-format-v2.go",
+        "cmd/xl-storage.go"
+      ]
+    },
+    {
+      "commit": "b6f70ab0855a17d60ee62a43c528ad8308ccee93",
+      "files": [
+        "cmd/storage-rest-server.go"
+      ]
+    },
+    {
+      "commit": "1af351a70295201078121af8c31fb3241f3b5107",
+      "files": [
+        "cmd/storage-rest-server-guard.go",
+        "cmd/storage-rest-server.go"
+      ]
+    },
+    {
+      "commit": "38366f654325d8ebea33bb7ae08b7299ee8267b8",
+      "files": [
+        "cmd/storage-rest-server.go"
+      ]
+    },
+    {
+      "commit": "22c1e41fd2e5afa7f5db61a81de2a16d36dfc945",
+      "files": [
+        "cmd/object-multipart-handlers.go"
+      ]
+    },
+    {
+      "commit": "2f55347f78352aed8e08866d370c9426c73362cf",
+      "files": [
+        "cmd/auth-handler.go",
+        "cmd/bucket-policy.go",
+        "cmd/handler-utils.go",
+        "cmd/object-handlers.go",
+        "cmd/object-multipart-handlers.go",
+        "internal/handlers/proxy.go"
+      ]
+    },
+    {
+      "commit": "744a9dcd71c2ba740937ea7c3527f6a04f1b8fe0",
+      "files": [
+        "cmd/auth-handler.go",
+        "cmd/bucket-policy.go"
+      ]
+    },
+    {
+      "commit": "2602177ef6ea2c353c22a885e6283802958530d8",
+      "files": [
+        "cmd/xl-storage-disk-id-check.go"
+      ]
+    },
+    {
+      "commit": "1233254309b15571f101b2b26d531951ceaeef1e",
+      "files": [
+        "cmd/bucket-policy.go",
+        "cmd/object-handlers.go",
+        "cmd/signature-v4-utils.go",
+        "cmd/signature-v4.go",
+        "internal/http/headers.go"
+      ]
+    }
+  ]
+}
