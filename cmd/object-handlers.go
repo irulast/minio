@@ -3262,6 +3262,12 @@ func (api objectAPIHandlers) PutObjectTaggingHandler(w http.ResponseWriter, r *h
 		return
 	}
 
+	// Set this such that authorization policies can be applied on the object
+	// tags. This is derived from the request body, so it must be injected only
+	// after signature verification: the SigV4 verifier now rejects unsigned
+	// x-amz-* request headers, and this synthesized header is never signed.
+	r.Header.Set(xhttp.AmzObjectTagging, tagsStr)
+
 	opts, err := getOpts(ctx, r, bucket, object)
 	if err != nil {
 		writeErrorResponse(ctx, w, toAPIError(ctx, err), r.URL)
@@ -3365,12 +3371,6 @@ func (api objectAPIHandlers) DeleteObjectTaggingHandler(w http.ResponseWriter, r
 		writeErrorResponse(ctx, w, toAPIError(ctx, err), r.URL)
 		return
 	}
-
-	// Set this such that authorization policies can be applied on the object
-	// tags. This is derived from the request body, so it must be injected only
-	// after signature verification: the SigV4 verifier now rejects unsigned
-	// x-amz-* request headers, and this synthesized header is never signed.
-	r.Header.Set(xhttp.AmzObjectTagging, tagsStr)
 
 	opts, err := getOpts(ctx, r, bucket, object)
 	if err != nil {
