@@ -19,6 +19,7 @@ package openid
 
 import (
 	"bytes"
+	"crypto"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -118,7 +119,7 @@ func TestJWTHMACType(t *testing.T) {
 
 	pubKeys := publicKeys{
 		RWMutex: &sync.RWMutex{},
-		pkMap:   map[string]any{},
+		pkMap:   map[string]crypto.PublicKey{},
 	}
 	pubKeys.add("76b95ae5-33ef-4283-97b7-d2a85dc2d8f4", []byte("WNGvKVyyNmXq0TraSvjaDN9CtpFgx35IXtGEffMCPR0"))
 
@@ -164,7 +165,7 @@ func TestJWT(t *testing.T) {
 
 	pubKeys := publicKeys{
 		RWMutex: &sync.RWMutex{},
-		pkMap:   map[string]any{},
+		pkMap:   map[string]crypto.PublicKey{},
 	}
 	err := pubKeys.parseAndAdd(bytes.NewBuffer([]byte(jsonkey)))
 	if err != nil {
