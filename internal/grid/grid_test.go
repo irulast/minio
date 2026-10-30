@@ -85,7 +85,7 @@ func TestSingleRoundtrip(t *testing.T) {
 		resp, err := remoteConn.Request(t.Context(), handlerTest, []byte(testPayload))
 		errFatal(err)
 		if string(resp) != testPayload {
-			t.Errorf("want %q, got %q", testPayload, string(resp))
+			t.Errorf("want %q, got %v", testPayload, string(resp))
 		}
 		t.Log("Roundtrip:", time.Since(start))
 	})
@@ -111,7 +111,7 @@ func TestSingleRoundtrip(t *testing.T) {
 		resp, err := remoteConn.Request(t.Context(), handlerTest, testPayload)
 		errFatal(err)
 		if string(resp) != string(testPayload) {
-			t.Errorf("want %q, got %q", testPayload, string(resp))
+			t.Errorf("want %q, got %v", testPayload, string(resp))
 		}
 		t.Log("Roundtrip:", time.Since(start))
 	})
@@ -230,7 +230,7 @@ func TestSingleRoundtripGenerics(t *testing.T) {
 	resp, err := h1.Call(t.Context(), remoteConn, &req)
 	errFatal(err)
 	if resp.OrgString != testPayload {
-		t.Errorf("want %q, got %q", testPayload, resp.OrgString)
+		t.Errorf("want %q, got %v", testPayload, resp.OrgString)
 	}
 	t.Log("Roundtrip:", time.Since(start))
 	h1.PutResponse(resp)
@@ -292,7 +292,7 @@ func TestSingleRoundtripGenericsRecycle(t *testing.T) {
 	resp, err := h1.Call(t.Context(), remoteConn, req)
 	errFatal(err)
 	if resp.Get("test") != testPayload {
-		t.Errorf("want %q, got %q", testPayload, resp.Get("test"))
+		t.Errorf("want %q, got %v", testPayload, resp.Get("test"))
 	}
 	t.Log("Roundtrip:", time.Since(start))
 	h1.PutResponse(resp)
@@ -486,7 +486,7 @@ func testStreamRoundtrip(t *testing.T, local, remote *Manager) {
 		errFatal(resp.Err)
 		t.Logf("got resp: %+v", string(resp.Msg))
 		if string(resp.Msg) != testPayload+strconv.Itoa(n) {
-			t.Errorf("want %q, got %q", testPayload+strconv.Itoa(n), string(resp.Msg))
+			t.Errorf("want %q, got %v", testPayload+strconv.Itoa(n), string(resp.Msg))
 		}
 		if n == 10 {
 			close(stream.Requests)
@@ -905,7 +905,7 @@ func testGenericsStreamRoundtrip(t *testing.T, local, remote *Manager) {
 	err = stream.Results(func(resp *testResponse) error {
 		const wantString = testPayload + testPayload
 		if resp.OrgString != testPayload+testPayload {
-			t.Errorf("want %q, got %q", wantString, resp.OrgString)
+			t.Errorf("want %q, got %v", wantString, resp.OrgString)
 		}
 		if resp.OrgNum != n+1 {
 			t.Errorf("want %d, got %d", n+1, resp.OrgNum)
@@ -983,7 +983,7 @@ func testGenericsStreamRoundtripSubroute(t *testing.T, local, remote *Manager) {
 		// t.Logf("got resp: %+v", *resp.Msg)
 		const wantString = testPayload + testPayload
 		if resp.OrgString != testPayload+testPayload {
-			t.Errorf("want %q, got %q", wantString, resp.OrgString)
+			t.Errorf("want %q, got %v", wantString, resp.OrgString)
 		}
 		if resp.OrgNum != n+1 {
 			t.Errorf("want %d, got %d", n+1, resp.OrgNum)
