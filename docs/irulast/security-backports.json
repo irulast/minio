@@ -223,6 +223,53 @@
         "cmd/signature-v4.go",
         "internal/http/headers.go"
       ]
+    },
+    {
+      "commit": "a164e1dda1bbb58445b19e3df32c5286b17974b6",
+      "files": [
+        "cmd/admin-handlers-users.go"
+      ]
+    },
+    {
+      "commit": "87d8b5967f7d5b1d3be5c5b6905b0e64653539ff",
+      "files": [
+        "cmd/bucket-policy.go",
+        "cmd/signature-v4-utils.go",
+        "cmd/signature-v4.go",
+        "internal/http/headers.go"
+      ]
+    },
+    {
+      "commit": "c4b5e1cb45265220604a4dea16aeabb3d8c06c40",
+      "files": [
+        "cmd/auth-handler.go"
+      ]
+    },
+    {
+      "commit": "58735ee3829e36e24735587e2212b97c4149e0d1",
+      "files": [
+        "cmd/admin-handlers-users.go"
+      ]
+    },
+    {
+      "commit": "229fe2b3c3d38345927992c6ab2d81bc5201f0a8",
+      "files": [
+        "cmd/admin-handlers-users.go"
+      ]
+    },
+    {
+      "commit": "b73581b05d4f739284b41ed577a3460ce63b0938",
+      "files": [
+        "cmd/encryption-v1.go",
+        "cmd/erasure-object.go"
+      ]
     }
-  ]
+  ],
+  "shared_package": {
+    "repository": "https://github.com/irulast/minio-pkg",
+    "source": "https://github.com/pgsty/silo-pkg",
+    "source_commit": "0416eb1f450536ca2cc3592c2c2a06a3df88d4e0",
+    "compatibility_commit": "295e411b5908a07dbce486552157093e4c019e94",
+    "adaptation": "Historical MinIO module and import paths retained"
+  }
 }

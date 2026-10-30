@@ -9,8 +9,8 @@ We own patch selection, builds, regression validation, release approval, and
 GitOps promotion. There is no automatic tracking of PGSTY's server releases.
 The MinIO module name, binary, endpoint names, and operator contracts are retained.
 
-The patched `github.com/pgsty/silo-pkg/v3` v3.11.0 dependency supplies IAM
-condition-key and bucket-resource matching fixes and the LDAP TLS correction,
+The owned `github.com/irulast/minio-pkg/v3` compatibility fork of PGSTY v3.15.2
+supplies current IAM condition-key, resource matching, LDAP, and dependency fixes,
 using Go's replacement mechanism to preserve historical import paths. The server
 and console are not switched to the Silo product.
 

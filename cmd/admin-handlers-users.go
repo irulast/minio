@@ -355,17 +355,24 @@ func (a adminAPIHandlers) ListGroups(w http.ResponseWriter, r *http.Request) {
 }
 
 // SetGroupStatus - PUT /minio/admin/v3/set-group-status?group=mygroup1&status=enabled
+func setGroupStatusAdminAction(status string) policy.AdminAction {
+	if madmin.GroupStatus(status) == madmin.GroupDisabled {
+		return policy.DisableGroupAdminAction
+	}
+	return policy.EnableGroupAdminAction
+}
+
 func (a adminAPIHandlers) SetGroupStatus(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
-	objectAPI, _ := validateAdminReq(ctx, w, r, policy.EnableGroupAdminAction)
-	if objectAPI == nil {
-		return
-	}
 
 	vars := mux.Vars(r)
 	group := vars["group"]
 	status := vars["status"]
+
+	objectAPI, _ := validateAdminReq(ctx, w, r, setGroupStatusAdminAction(status))
+	if objectAPI == nil {
+		return
+	}
 
 	var (
 		err       error
@@ -398,17 +405,24 @@ func (a adminAPIHandlers) SetGroupStatus(w http.ResponseWriter, r *http.Request)
 }
 
 // SetUserStatus - PUT /minio/admin/v3/set-user-status?accessKey=<access_key>&status=[enabled|disabled]
+func setUserStatusAdminAction(status string) policy.AdminAction {
+	if madmin.AccountStatus(status) == madmin.AccountDisabled {
+		return policy.DisableUserAdminAction
+	}
+	return policy.EnableUserAdminAction
+}
+
 func (a adminAPIHandlers) SetUserStatus(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
-	objectAPI, creds := validateAdminReq(ctx, w, r, policy.EnableUserAdminAction)
-	if objectAPI == nil {
-		return
-	}
 
 	vars := mux.Vars(r)
 	accessKey := vars["accessKey"]
 	status := vars["status"]
+
+	objectAPI, creds := validateAdminReq(ctx, w, r, setUserStatusAdminAction(status))
+	if objectAPI == nil {
+		return
+	}
 
 	// you cannot enable or disable yourself.
 	if accessKey == creds.AccessKey {
@@ -488,11 +502,15 @@ func (a adminAPIHandlers) AddUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	checkDenyOnly := accessKey == cred.AccessKey
+	action := policy.Action(policy.CreateUserAdminAction)
+	if checkDenyOnly {
+		action = policy.ChangeMyPasswordAdminAction
+	}
 
 	if !globalIAMSys.IsAllowed(policy.Args{
 		AccountName:     cred.AccessKey,
 		Groups:          cred.Groups,
-		Action:          policy.CreateUserAdminAction,
+		Action:          action,
 		ConditionValues: getConditionValues(r, "", cred),
 		IsOwner:         owner,
 		Claims:          cred.Claims,
