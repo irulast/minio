@@ -402,6 +402,90 @@
         "cmd/bucket-object-lock.go"
       ],
       "adaptation": "SN-2026-015 retention authorization and governance-bypass portion only. SN-2026-016 overwrite/locking changes still require a separate multi-pool adaptation."
+    },
+    {
+      "commit": "f653a6ea0399dc3b3e597ddbb64ed1604be346c0",
+      "files": [
+        "cmd/iam-store.go",
+        "cmd/iam.go",
+        "cmd/peer-rest-server.go"
+      ]
+    },
+    {
+      "commit": "709d50a916bf3311eda2b3882ac5f2a0251f4223",
+      "files": [
+        "cmd/admin-router.go",
+        "cmd/iam-etcd-store.go",
+        "cmd/iam-group-revision.go",
+        "cmd/iam-object-store.go",
+        "cmd/iam-replication-protocol.go",
+        "cmd/iam-revision-index.go",
+        "cmd/iam-revision.go",
+        "cmd/iam-store.go",
+        "cmd/iam.go",
+        "cmd/metrics-v3-cluster-iam.go",
+        "cmd/metrics-v3.go",
+        "cmd/peer-rest-server.go",
+        "cmd/site-replication.go",
+        "cmd/sts-handlers.go"
+      ],
+      "adaptation": "Retain historical MinIO imports; no Silo product or module migration."
+    },
+    {
+      "commit": "7b4cacc392994f72817d59eff2b6bbd919996741",
+      "files": [
+        "cmd/iam-group-revision.go",
+        "cmd/iam-replication-protocol.go",
+        "cmd/iam-revision-index.go",
+        "cmd/iam-revision.go"
+      ],
+      "adaptation": "Retain historical MinIO imports; no Silo product or module migration."
+    },
+    {
+      "commit": "0cd388c666f8211f552604ae73448a066e9c25ce",
+      "files": [
+        "cmd/iam-replication-protocol.go",
+        "cmd/iam-revision.go",
+        "cmd/iam-store.go",
+        "cmd/iam.go"
+      ],
+      "adaptation": "Retain historical MinIO imports; no Silo product or module migration."
+    },
+    {
+      "commit": "9faeb7a1147435aa7ebc02bb997837ddfbdd2a81",
+      "files": [
+        "cmd/iam-object-store.go"
+      ],
+      "adaptation": "Retain historical MinIO imports; no Silo product or module migration."
+    },
+    {
+      "commit": "625c11e7e12b354bd8e028c1dede7fd200ef7021",
+      "files": [
+        "cmd/iam-object-store.go"
+      ],
+      "adaptation": "Retain historical MinIO imports; no Silo product or module migration."
+    },
+    {
+      "commit": "1b5477f3df87924712ad8dc580c8f8eac63eda2d",
+      "files": [
+        "cmd/config-migrate.go",
+        "cmd/config.go",
+        "cmd/iam-etcd-store.go",
+        "cmd/iam-object-store.go",
+        "cmd/iam-store.go",
+        "internal/config/crypto.go",
+        "internal/crypto/sse-s3.go",
+        "internal/kms/kes.go",
+        "internal/config/crypto_test.go"
+      ],
+      "adaptation": "Retain historical MinIO imports; no Silo product or module migration."
+    },
+    {
+      "commit": "1e3ab56b064bf4d56eee636fb77ac5af229f92ef",
+      "files": [
+        "cmd/iam-store.go"
+      ],
+      "adaptation": "Retain historical MinIO imports; no Silo product or module migration."
     }
   ],
   "shared_package": {

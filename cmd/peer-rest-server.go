@@ -204,7 +204,9 @@ func (s *peerRESTServer) DeleteServiceAccountHandler(mss *grid.MSS) (np grid.NoP
 		return np, grid.NewRemoteErr(errors.New("service account name is missing"))
 	}
 
-	if err := globalIAMSys.DeleteServiceAccount(context.Background(), accessKey, false); err != nil {
+	ctx, cancel := context.WithTimeout(GlobalContext, defaultContextTimeout)
+	defer cancel()
+	if err := globalIAMSys.LoadServiceAccount(ctx, accessKey); err != nil {
 		return np, grid.NewRemoteErr(err)
 	}
 
@@ -230,7 +232,8 @@ func (s *peerRESTServer) LoadServiceAccountHandler(mss *grid.MSS) (np grid.NoPay
 	return np, nerr
 }
 
-// DeleteUserHandler - deletes a user on the server.
+// DeleteUserHandler reloads the state committed by another node. A delayed
+// notification must not delete an identity recreated since that commit.
 func (s *peerRESTServer) DeleteUserHandler(mss *grid.MSS) (np grid.NoPayload, nerr *grid.RemoteErr) {
 	objAPI := newObjectLayerFn()
 	if objAPI == nil {
@@ -242,7 +245,9 @@ func (s *peerRESTServer) DeleteUserHandler(mss *grid.MSS) (np grid.NoPayload, ne
 		return np, grid.NewRemoteErr(errors.New("username is missing"))
 	}
 
-	if err := globalIAMSys.DeleteUser(context.Background(), accessKey, false); err != nil {
+	ctx, cancel := context.WithTimeout(GlobalContext, defaultContextTimeout)
+	defer cancel()
+	if err := globalIAMSys.LoadUserAfterDelete(ctx, accessKey); err != nil {
 		return np, grid.NewRemoteErr(err)
 	}
 
@@ -271,7 +276,9 @@ func (s *peerRESTServer) LoadUserHandler(mss *grid.MSS) (np grid.NoPayload, nerr
 		userType = stsUser
 	}
 
-	if err = globalIAMSys.LoadUser(context.Background(), objAPI, accessKey, userType); err != nil {
+	ctx, cancel := context.WithTimeout(GlobalContext, defaultContextTimeout)
+	defer cancel()
+	if err = globalIAMSys.LoadUser(ctx, objAPI, accessKey, userType); err != nil {
 		return np, grid.NewRemoteErr(err)
 	}
 

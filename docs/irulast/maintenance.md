@@ -46,12 +46,18 @@ The second patch batch adds SSE-C attribute checks (SN-2026-007), the later
 replication-trust corrections (008), explicit-version delete authorization (010),
 and delegated-admin boundaries (017), including their compatibility follow-ups.
 It also validates bare-ARN policies on writes (005). These additions still need
-their own successful CI run. Before production promotion, finish durable IAM
-revocation (013), overwrite protection (016), and validate
+their own successful CI run. Before production promotion, finish
+overwrite protection (016), and validate
 the owned console sharing-proxy backport (014). The retention-authorization
 repair (015) now checks the requested retention action before reading state and
 requires a separate bypass permission when weakening active governance retention.
-The overwrite repair (016) is still blocked on its multi-pool locking adaptation. Forwarding trust (018) is backported and the
+The overwrite repair (016) is still blocked on its multi-pool locking adaptation.
+Durable IAM revocation (013), scoped STS revocation, and the subsequent reload,
+long-name and policy-reset corrections are backported. An ordinary IAM lifecycle
+check covers account creation, persisted reads across restart, deletion inventory
+after restart, and deliberate recreation. The new additive peer protocol retains
+its existing wire names; coordinated peer upgrades and restored IAM validation
+remain necessary. This patch must not be treated as binary-downgrade safe. Forwarding trust (018) is backported and the
 owned image defaults to `MINIO_API_TRUSTED_PROXIES=none`: client IP attribution
 uses the TCP peer. Audit IP-based policies before promotion; forwarding clients
 require an explicit, narrow proxy allowlist. Notification registration and
