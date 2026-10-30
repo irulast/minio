@@ -364,6 +364,35 @@
       "files": [
         "cmd/admin-handlers-users.go"
       ]
+    },
+    {
+      "commit": "162ded3438f45b94a2195ff7996989ee7036b3c9",
+      "files": [
+        "internal/config/config.go",
+        "internal/config/notify/help.go",
+        "internal/config/notify/legacy.go",
+        "internal/config/notify/parse.go",
+        "internal/event/target/nats.go"
+      ]
+    },
+    {
+      "commit": "fe6dc47804e9fdce2711756a9c3d9840e2d4d40a",
+      "files": [
+        "cmd/common-main.go",
+        "internal/config/identity/ldap/config.go",
+        "internal/config/trustedproxies.go",
+        "internal/handlers/forwarder.go",
+        "internal/handlers/proxy.go"
+      ]
+    },
+    {
+      "commit": "f1ba68358265efd2cd937e9a9929c1df1a49301c",
+      "files": [
+        "cmd/config-migrate.go",
+        "cmd/server-main.go",
+        "internal/config/notify/legacy.go"
+      ],
+      "adaptation": "Retain MinIO product name in migration errors."
     }
   ],
   "shared_package": {

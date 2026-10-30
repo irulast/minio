@@ -10,7 +10,7 @@ ARG RELEASE_TAG=RELEASE.2026-10-30T00-00-00Z.irulast.1
 RUN test -n "$SOURCE_REVISION" && go build -trimpath -ldflags "-s -w -X github.com/minio/minio/cmd.Version=$RELEASE_DATE -X github.com/minio/minio/cmd.ReleaseTag=$RELEASE_TAG -X github.com/minio/minio/cmd.CommitID=$SOURCE_REVISION -X github.com/minio/minio/cmd.ShortCommitID=$SOURCE_REVISION" -o /out/minio .
 
 FROM alpine:3.24.2@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
-RUN apk add --no-cache ca-certificates curl && addgroup -g 1000 minio && adduser -D -u 1000 -G minio minio
+RUN apk upgrade --no-cache && apk add --no-cache ca-certificates curl && addgroup -g 1000 minio && adduser -D -u 1000 -G minio minio
 ARG SOURCE_REVISION
 LABEL org.opencontainers.image.source="https://github.com/irulast/minio" \
       org.opencontainers.image.revision="$SOURCE_REVISION" \
@@ -22,7 +22,8 @@ ENV MINIO_ACCESS_KEY_FILE=access_key \
     MINIO_ROOT_PASSWORD_FILE=secret_key \
     MINIO_KMS_SECRET_KEY_FILE=kms_master_key \
     MINIO_CONFIG_ENV_FILE=config.env \
-    MINIO_UPDATE=off
+    MINIO_UPDATE=off \
+    MINIO_API_TRUSTED_PROXIES=none
 COPY --from=build /out/minio /usr/bin/minio
 COPY LICENSE CREDITS /licenses/
 COPY dockerscripts/docker-entrypoint.sh /usr/bin/docker-entrypoint.sh
