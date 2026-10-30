@@ -269,7 +269,7 @@
     "repository": "https://github.com/irulast/minio-pkg",
     "source": "https://github.com/pgsty/silo-pkg",
     "source_commit": "0416eb1f450536ca2cc3592c2c2a06a3df88d4e0",
-    "compatibility_commit": "295e411b5908a07dbce486552157093e4c019e94",
+    "compatibility_commit": "92d17399c066ba292607d18ab68fd1d85a6de939",
     "adaptation": "Historical MinIO module and import paths retained"
   }
 }

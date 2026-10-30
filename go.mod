@@ -3,7 +3,7 @@ module github.com/minio/minio
 go 1.27.3
 
 // Backported IAM and LDAP fixes; preserve MinIO import paths.
-replace github.com/minio/pkg/v3 => github.com/irulast/minio-pkg/v3 v3.0.0-20261030224708-295e411b5908
+replace github.com/minio/pkg/v3 => github.com/irulast/minio-pkg/v3 v3.0.0-20261030230139-92d17399c066
 
 // Install tools using 'go install tool'.
 tool (
@@ -286,7 +286,7 @@ require (
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/exp v0.0.0-20261014143641-f0251eb4aa3e // indirect
 	golang.org/x/mod v0.42.0 // indirect
-	golang.org/x/net v0.61.0 // indirect
+	golang.org/x/net v0.62.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
 	golang.org/x/tools v0.52.0 // indirect
 	google.golang.org/genproto v0.0.0-20261019180522-ce908d29299b // indirect

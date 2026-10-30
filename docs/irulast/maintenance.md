@@ -47,7 +47,7 @@ must not be reported as complete remediation or as a deployed release.
 ## Build and promotion
 
 The private CI repository accepts an explicit 40-character source commit and
-builds it on `mke-builds`. It runs ordinary storage/serialization tests, a compile
+builds it on `mke-python`. It runs ordinary storage/serialization tests, a compile
 check of all test packages, the upstream blocking govulncheck, and the existing
 shared BuildKit signing, SBOM, and Trivy gates. Scan thresholds, base-layer
 handling, and waivers are not changed. Candidate tags start with `security-` and
