@@ -296,3 +296,5 @@ require (
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/ini.v1 v1.67.3 // indirect
 )
+
+replace github.com/minio/console => github.com/irulast/minio-console v0.0.0-20261030233724-66f34de5be44

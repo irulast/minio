@@ -401,5 +401,14 @@
     "source_commit": "0416eb1f450536ca2cc3592c2c2a06a3df88d4e0",
     "compatibility_commit": "92d17399c066ba292607d18ab68fd1d85a6de939",
     "adaptation": "Historical MinIO module and import paths retained"
+  },
+  "console": {
+    "repository": "https://github.com/irulast/minio-console",
+    "source_commit": "2017f33b26e1",
+    "compatibility_commit": "66f34de5be44dc49f10f82e80c5b06b4cf00a9d7",
+    "advisory": "SN-2026-014",
+    "backport": "https://github.com/pgsty/silo-console/pull/56",
+    "backport_commit": "56dfe455ac2f58fd19dc3cc9751248c382380d77",
+    "adaptation": "Retain MinIO Console API and original HTTP client constructor."
   }
 }

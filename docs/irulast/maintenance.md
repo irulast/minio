@@ -8,6 +8,10 @@ commit in `security-backports.json`. Copyright and license notices are retained.
 We own patch selection, builds, regression validation, release approval, and
 GitOps promotion. There is no automatic tracking of PGSTY's server releases.
 The MinIO module name, binary, endpoint names, and operator contracts are retained.
+The embedded console uses an immutable `irulast/minio-console` replacement,
+backporting the bounded anonymous object-download handler while keeping its UI
+and original HTTP-client integration. Its parser compatibility test runs with
+the server dependency graph in cluster CI.
 
 The owned `github.com/irulast/minio-pkg/v3` compatibility fork of PGSTY v3.15.2
 supplies current IAM condition-key, resource matching, LDAP, and dependency fixes,
@@ -43,8 +47,8 @@ replication-trust corrections (008), explicit-version delete authorization (010)
 and delegated-admin boundaries (017), including their compatibility follow-ups.
 It also validates bare-ARN policies on writes (005). These additions still need
 their own successful CI run. Before production promotion, finish durable IAM
-revocation (013), retention and overwrite authorization (015/016), and evaluate
-the console sharing proxy (014). Forwarding trust (018) is backported and the
+revocation (013), retention and overwrite authorization (015/016), and validate
+the owned console sharing-proxy backport (014). Forwarding trust (018) is backported and the
 owned image defaults to `MINIO_API_TRUSTED_PROXIES=none`: client IP attribution
 uses the TCP peer. Audit IP-based policies before promotion; forwarding clients
 require an explicit, narrow proxy allowlist. Notification registration and

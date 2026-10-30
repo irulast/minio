@@ -324,6 +324,8 @@ github.com/ianlancetaylor/demangle v0.0.0-20230524184225-eabc099b10ab/go.mod h1:
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
+github.com/irulast/minio-console v0.0.0-20261030233724-66f34de5be44 h1:c5MDJoDisBmYbqWvs02e6aLtzlxMxsmOntS6MtlRqSY=
+github.com/irulast/minio-console v0.0.0-20261030233724-66f34de5be44/go.mod h1:hKNkzdKBKU84w5wXqMnkH74QocJGHW2zjvFtuGETDsc=
 github.com/irulast/minio-pkg/v3 v3.0.0-20261030230139-92d17399c066 h1:xEqqOt2BpKZiK8f3lzl8hJXhA4AphVdwa2Oi3zqr8n4=
 github.com/irulast/minio-pkg/v3 v3.0.0-20261030230139-92d17399c066/go.mod h1:0VLGNEEserOZvokkZQtxKQBTFjjaiWbLJOj9xz4nMU0=
 github.com/jcmturner/aescts/v2 v2.0.0 h1:9YKLH6ey7H4eDBXW8khjYslgyqG2xZikXP0EQFKrle8=
@@ -427,8 +429,6 @@ github.com/minio/cli v1.24.2 h1:J+fCUh9mhPLjN3Lj/YhklXvxj8mnyE/D6FpFduXJ2jg=
 github.com/minio/cli v1.24.2/go.mod h1:bYxnK0uS629N3Bq+AOZZ+6lwF77Sodk4+UL9vNuXhOY=
 github.com/minio/colorjson v1.0.8 h1:AS6gEQ1dTRYHmC4xuoodPDRILHP/9Wz5wYUGDQfPLpg=
 github.com/minio/colorjson v1.0.8/go.mod h1:wrs39G/4kqNlGjwqHvPlAnXuc2tlPszo6JKdSBCLN8w=
-github.com/minio/console v1.7.7-0.20250905210349-2017f33b26e1 h1:jOW1ggtITn8sreTzUjcdYE/ZffxeVmWstXNlBLOE6j4=
-github.com/minio/console v1.7.7-0.20250905210349-2017f33b26e1/go.mod h1:hKNkzdKBKU84w5wXqMnkH74QocJGHW2zjvFtuGETDsc=
 github.com/minio/crc64nvme v1.1.1 h1:8dwx/Pz49suywbO+auHCBpCtlW1OfpcLN7wYgVR6wAI=
 github.com/minio/crc64nvme v1.1.1/go.mod h1:eVfm2fAzLlxMdUGc0EEBGSMmPwmXD5XiNRpnu9J3bvg=
 github.com/minio/csvparser v1.0.0 h1:xJEHcYK8ZAjeW4hNV9Zu30u+/2o4UyPnYgyjWp8b7ZU=
