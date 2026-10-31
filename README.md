@@ -1,3 +1,19 @@
+# irulast MinIO maintenance fork
+
+This fork maintains the MinIO server under its existing command, S3 API, and
+configuration names. It is based on the archived upstream source and includes
+attributed security backports. It is not an official MinIO release.
+
+Current security work is on `security/2026-10-maintenance`; it is a candidate,
+not yet approved for production. See [maintenance and release gates](docs/irulast/maintenance.md)
+and the [backport manifest](docs/irulast/security-backports.json).
+
+Cluster builds run from the private `irulast/minio-build` repository against an
+explicit source commit. This public fork is not granted access to cluster runners.
+The full corresponding source remains available here under AGPL-3.0-or-later.
+
+---
+
 > [!NOTE]
 > **THIS REPOSITORY IS NO LONGER MAINTAINED.**
 >

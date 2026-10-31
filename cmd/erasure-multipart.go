@@ -1290,10 +1290,26 @@ func (er erasureObjects) CompleteMultipartUpload(ctx context.Context, bucket str
 				hash.ChecksumSHA256.String():    part.ChecksumSHA256,
 				hash.ChecksumCRC64NVME.String(): part.ChecksumCRC64NVME,
 			}
-			if wantCS[checksumType.String()] != crc {
+			gotCS := wantCS[checksumType.String()]
+			var suppliedAnyCS bool
+			for _, v := range wantCS {
+				if v != "" {
+					suppliedAnyCS = true
+					break
+				}
+			}
+			// Part checksums are optional in the CompleteMultipartUpload body when
+			// the upload was created with a full object checksum type: clients send
+			// the object level checksum instead and do not retain part checksums.
+			// A part that carries any checksum at all is still validated against
+			// what we stored - including one sent under the wrong algorithm, which
+			// cannot match and is rejected. The object level checksum, if supplied,
+			// is verified against the merged part checksums below.
+			allowMissingPartCS := checksumType.FullObjectRequested() && !suppliedAnyCS
+			if !allowMissingPartCS && gotCS != crc {
 				return oi, InvalidPart{
 					PartNumber: part.PartNumber,
-					ExpETag:    wantCS[checksumType.String()],
+					ExpETag:    gotCS,
 					GotETag:    crc,
 				}
 			}
@@ -1448,6 +1464,28 @@ func (er erasureObjects) CompleteMultipartUpload(ctx context.Context, bucket str
 		}
 		ctx = lkctx.Context()
 		defer lk.Unlock(lkctx)
+	}
+
+	if !opts.ReplicationRequest && !opts.DataMovement {
+		if fi.VersionID == "" || fi.VersionID == nullVersionID {
+			if err := checkObjectLockedForOverwrite(ctx, bucket, object, er.getObjectInfo); err != nil {
+				return oi, toObjectErr(err, bucket, object)
+			}
+		} else {
+			_, gerr := er.getObjectInfo(ctx, bucket, object, ObjectOptions{
+				VersionID:        fi.VersionID,
+				Versioned:        opts.Versioned,
+				VersionSuspended: opts.VersionSuspended,
+				NoLock:           true,
+			})
+			switch {
+			case gerr == nil, errors.As(gerr, &MethodNotAllowed{}):
+				return oi, toObjectErr(errAuthentication, bucket, object)
+			case isErrVersionNotFound(gerr) || isErrObjectNotFound(gerr):
+			default:
+				return oi, toObjectErr(gerr, bucket, object)
+			}
+		}
 	}
 
 	er.cleanupMultipartPath(ctx, paths...) // cleanup all part.N.meta, and skipped part.N's before final rename().

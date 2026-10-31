@@ -249,8 +249,10 @@ func (a adminAPIHandlers) AddServiceAccountLDAP(w http.ResponseWriter, r *http.R
 
 		// In case of LDAP/OIDC we need to set `opts.claims` to ensure
 		// it is associated with the LDAP/OIDC user properly.
+		// The new credential's policy comes from the request, not the caller.
 		for k, v := range cred.Claims {
-			if k == expClaim {
+			switch k {
+			case expClaim, policy.SessionPolicyName, sessionPolicyNameExtracted, iamPolicyClaimNameSA():
 				continue
 			}
 			opts.claims[k] = v
@@ -267,7 +269,7 @@ func (a adminAPIHandlers) AddServiceAccountLDAP(w http.ResponseWriter, r *http.R
 		lookupResult, targetGroups, err = globalIAMSys.LDAPConfig.LookupUserDN(targetUser)
 		if err != nil {
 			// if not found, check if DN
-			if strings.Contains(err.Error(), "User DN not found for:") {
+			if strings.Contains(strings.ToLower(err.Error()), "user dn not found for:") {
 				if isDN {
 					// warn user that DNs are not allowed
 					writeErrorResponseJSON(ctx, w, errorCodes.ToAPIErrWithErr(ErrAdminLDAPExpectedLoginName, err), r.URL)

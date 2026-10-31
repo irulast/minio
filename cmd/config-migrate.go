@@ -91,7 +91,7 @@ func readConfigWithoutMigrate(ctx context.Context, objAPI ObjectLayer) (config.C
 			return nil, err
 		}
 
-		data, err = decryptData(data, configFile)
+		data, err = decryptData(ctx, data, configFile)
 		if err != nil {
 			return nil, err
 		}
@@ -167,7 +167,9 @@ func readConfigWithoutMigrate(ctx context.Context, objAPI ObjectLayer) (config.C
 		notify.SetNotifyMQTT(newCfg, k, args)
 	}
 	for k, args := range cfg.Notify.MySQL {
-		notify.SetNotifyMySQL(newCfg, k, args)
+		if err := notify.SetNotifyMySQL(newCfg, k, args); err != nil {
+			return nil, err
+		}
 	}
 	for k, args := range cfg.Notify.NATS {
 		notify.SetNotifyNATS(newCfg, k, args)
@@ -176,7 +178,9 @@ func readConfigWithoutMigrate(ctx context.Context, objAPI ObjectLayer) (config.C
 		notify.SetNotifyNSQ(newCfg, k, args)
 	}
 	for k, args := range cfg.Notify.PostgreSQL {
-		notify.SetNotifyPostgres(newCfg, k, args)
+		if err := notify.SetNotifyPostgres(newCfg, k, args); err != nil {
+			return nil, err
+		}
 	}
 	for k, args := range cfg.Notify.Redis {
 		notify.SetNotifyRedis(newCfg, k, args)

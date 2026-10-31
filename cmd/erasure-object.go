@@ -145,6 +145,13 @@ func (er erasureObjects) CopyObject(ctx context.Context, srcBucket, srcObject, d
 		}
 	}
 
+	if !dstOpts.ReplicationRequest && !dstOpts.DataMovement &&
+		(versionID == "" || versionID == nullVersionID) {
+		if err := checkObjectLockedForOverwrite(ctx, dstBucket, dstObject, er.getObjectInfo); err != nil {
+			return oi, toObjectErr(err, dstBucket, dstObject)
+		}
+	}
+
 	modTime = UTCNow() // We only preserve modTime if dstOpts.MTime is true.
 	// in all other cases mtime is latest.
 
@@ -266,9 +273,19 @@ func (er erasureObjects) GetObjectNInfo(ctx context.Context, bucket, object stri
 				ObjInfo: objInfo,
 			}, err
 		}
-
 		// Zero byte objects don't even need to further initialize pipes etc.
-		return NewGetObjectReaderFromReader(bytes.NewReader(nil), objInfo, opts)
+		gr, err = NewGetObjectReaderFromReader(bytes.NewReader(nil), objInfo, opts)
+		if err != nil {
+			return gr, err
+		}
+		// With no data, the reader above cannot authenticate an SSE-C key the
+		// way NewGetObjectReader does. Check it after the preconditions so zero
+		// and non-zero reads preserve the same error ordering.
+		if err := checkSSECReadKey(h, objInfo, opts); err != nil {
+			gr.Close()
+			return nil, err
+		}
+		return gr, nil
 	}
 
 	if objInfo.IsRemote() {
@@ -1558,6 +1575,13 @@ func (er erasureObjects) putObject(ctx context.Context, bucket string, object st
 		}
 		ctx = lkctx.Context()
 		defer lk.Unlock(lkctx)
+	}
+
+	if !opts.ReplicationRequest && !opts.DataMovement &&
+		(fi.VersionID == "" || fi.VersionID == nullVersionID) {
+		if err := checkObjectLockedForOverwrite(ctx, bucket, object, er.getObjectInfo); err != nil {
+			return ObjectInfo{}, toObjectErr(err, bucket, object)
+		}
 	}
 
 	// Rename the successfully written temporary object to final location.

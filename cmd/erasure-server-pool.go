@@ -76,6 +76,12 @@ func (z *erasureServerPools) SinglePool() bool {
 
 // Initialize new pool of erasure sets.
 func newErasureServerPools(ctx context.Context, endpointServerPools EndpointServerPools) (ObjectLayer, error) {
+	// The first irulast maintenance release supports the single-pool topology
+	// used by our stores. Reject other layouts before opening any storage:
+	// multi-pool object-lock coordination has not yet passed release validation.
+	if len(endpointServerPools) != 1 {
+		return nil, errors.New("this irulast maintenance release requires exactly one erasure pool; multi-pool storage is not supported")
+	}
 	var (
 		deploymentID       string
 		commonParityDrives int
@@ -1354,12 +1360,15 @@ func (z *erasureServerPools) CopyObject(ctx context.Context, srcBucket, srcObjec
 		ServerSideEncryption:       dstOpts.ServerSideEncryption,
 		UserDefined:                srcInfo.UserDefined,
 		Versioned:                  dstOpts.Versioned,
+		VersionSuspended:           dstOpts.VersionSuspended,
 		VersionID:                  dstOpts.VersionID,
 		MTime:                      dstOpts.MTime,
 		NoLock:                     true,
 		EncryptFn:                  dstOpts.EncryptFn,
 		WantChecksum:               dstOpts.WantChecksum,
 		WantServerSideChecksumType: dstOpts.WantServerSideChecksumType,
+		ReplicationRequest:         dstOpts.ReplicationRequest,
+		DataMovement:               dstOpts.DataMovement,
 	}
 
 	return z.serverPools[poolIdx].PutObject(ctx, dstBucket, dstObject, srcInfo.PutObjReader, putOpts)

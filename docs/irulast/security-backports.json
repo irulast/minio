@@ -1,0 +1,536 @@
+{
+  "upstream": "7aac2a2c5b7c882e68c1ce017d8256be2feea27f",
+  "reference": "https://github.com/pgsty/silo",
+  "production_backports": [
+    {
+      "commit": "377fc616d9c5944d9d0aff081089d2d0c4ebb12c",
+      "files": [
+        "cmd/bucket-replication-utils_gen.go",
+        "cmd/iam-object-store.go"
+      ]
+    },
+    {
+      "commit": "d24f449e089123210af06c51ee92ea2d51404a31",
+      "files": [
+        "internal/config/identity/openid/jwt.go",
+        "internal/config/identity/openid/openid.go"
+      ]
+    },
+    {
+      "commit": "3b950f8fa8576639c813c7aaeb60d93f9968ace5",
+      "files": [
+        "cmd/admin-handlers-idp-ldap.go",
+        "cmd/sts-handlers.go",
+        "internal/config/identity/ldap/ldap.go"
+      ]
+    },
+    {
+      "commit": "56fa63bfd155154157cd7e1fb6dc295a3b3104ed",
+      "files": [
+        "cmd/handler-utils.go",
+        "cmd/object-handlers.go",
+        "cmd/object-multipart-handlers.go"
+      ]
+    },
+    {
+      "commit": "3252d5b7f349e0ea41987761e4487972ea977e15",
+      "files": [
+        "internal/s3select/csv/errors.go",
+        "internal/s3select/csv/reader.go",
+        "internal/s3select/json/errors.go",
+        "internal/s3select/json/preader.go",
+        "internal/s3select/select.go"
+      ]
+    },
+    {
+      "commit": "f444b6f37e4494aa043b8786214c7c2c5703e5ff",
+      "files": [
+        "cmd/object-handlers.go",
+        "cmd/object-multipart-handlers.go",
+        "cmd/streaming-v4-unsigned.go"
+      ]
+    },
+    {
+      "commit": "efb6e5b00b03e189b44c0349efcee07d440ec428",
+      "files": [
+        "cmd/object-handlers.go"
+      ]
+    },
+    {
+      "commit": "18b712d49a689b40edf4ee7052b4eb223d700c40",
+      "files": [
+        "cmd/sts-handlers.go"
+      ]
+    },
+    {
+      "commit": "9e10f6d9a03c7d9e356251d55290d78c153a1159",
+      "files": [
+        "cmd/sts-handlers.go"
+      ]
+    },
+    {
+      "commit": "f44110890bebc5a126fff532d562154669be6dcb",
+      "files": [
+        "cmd/sts-handlers.go",
+        "internal/config/identity/ldap/config.go",
+        "internal/config/identity/ldap/help.go"
+      ]
+    },
+    {
+      "commit": "65795ee1f467cbf28a19244045b15abbab67fa13",
+      "files": [
+        "cmd/api-response.go"
+      ]
+    },
+    {
+      "commit": "5e40665acdc88f2508ab5a9033a8193daf62cfce",
+      "files": [
+        "cmd/sts-handlers.go",
+        "internal/config/identity/ldap/config.go"
+      ]
+    },
+    {
+      "commit": "fd69c89d05d3205fb237c9603c638668f83c857a",
+      "files": [
+        "internal/s3select/json/preader.go",
+        "internal/s3select/select.go"
+      ]
+    },
+    {
+      "commit": "73ac52472444e222c4cb345030d21ecabff876a8",
+      "files": [
+        "cmd/storage-datatypes.go",
+        "cmd/storage-datatypes_gen.go",
+        "cmd/storage-interface.go",
+        "cmd/storage-rest-client.go",
+        "cmd/storage-rest-common.go",
+        "cmd/storage-rest-server.go",
+        "cmd/storagemetric_string.go",
+        "cmd/xl-storage-disk-id-check.go",
+        "cmd/xl-storage.go"
+      ]
+    },
+    {
+      "commit": "c8590413fd321a315f3779cd9b2a6f1cb72064da",
+      "files": [
+        "cmd/erasure-multipart.go"
+      ]
+    },
+    {
+      "commit": "3e14733f1589998226909d30acbfc6bc793e1c10",
+      "files": [
+        "internal/hash/crc.go"
+      ]
+    },
+    {
+      "commit": "92471792691826b5225e9b17890047ef7c83080b",
+      "files": [
+        "cmd/erasure-decode.go"
+      ]
+    },
+    {
+      "commit": "89d346bf511d9dd6503c3defaf0db64b8158c48d",
+      "files": [
+        "cmd/update.go"
+      ]
+    },
+    {
+      "commit": "8069a32ac80bb91409270c5b510d3756d189f14a",
+      "files": [
+        "cmd/api-response.go"
+      ]
+    },
+    {
+      "commit": "a36fd8fffbfa6961ead1eed07567076202e33cf6",
+      "files": [
+        "internal/ioutil/ioutil.go"
+      ]
+    },
+    {
+      "commit": "ca7baa670d061f75aa79c153096410c8f72ee22b",
+      "files": [
+        "cmd/erasure-metadata.go",
+        "cmd/storage-rest-server-guard.go",
+        "cmd/storage-rest-server.go",
+        "cmd/xl-storage.go"
+      ]
+    },
+    {
+      "commit": "80e8eaa42322adcba3423e3f129d1f3b154363c5",
+      "files": [
+        "cmd/erasure-coding.go",
+        "cmd/erasure-metadata.go",
+        "cmd/erasure-server-pool-rebalance.go",
+        "cmd/xl-storage-format-v2.go",
+        "cmd/xl-storage.go"
+      ]
+    },
+    {
+      "commit": "b6f70ab0855a17d60ee62a43c528ad8308ccee93",
+      "files": [
+        "cmd/storage-rest-server.go"
+      ]
+    },
+    {
+      "commit": "1af351a70295201078121af8c31fb3241f3b5107",
+      "files": [
+        "cmd/storage-rest-server-guard.go",
+        "cmd/storage-rest-server.go"
+      ]
+    },
+    {
+      "commit": "38366f654325d8ebea33bb7ae08b7299ee8267b8",
+      "files": [
+        "cmd/storage-rest-server.go"
+      ]
+    },
+    {
+      "commit": "22c1e41fd2e5afa7f5db61a81de2a16d36dfc945",
+      "files": [
+        "cmd/object-multipart-handlers.go"
+      ]
+    },
+    {
+      "commit": "2f55347f78352aed8e08866d370c9426c73362cf",
+      "files": [
+        "cmd/auth-handler.go",
+        "cmd/bucket-policy.go",
+        "cmd/handler-utils.go",
+        "cmd/object-handlers.go",
+        "cmd/object-multipart-handlers.go",
+        "internal/handlers/proxy.go"
+      ]
+    },
+    {
+      "commit": "744a9dcd71c2ba740937ea7c3527f6a04f1b8fe0",
+      "files": [
+        "cmd/auth-handler.go",
+        "cmd/bucket-policy.go"
+      ]
+    },
+    {
+      "commit": "2602177ef6ea2c353c22a885e6283802958530d8",
+      "files": [
+        "cmd/xl-storage-disk-id-check.go"
+      ]
+    },
+    {
+      "commit": "1233254309b15571f101b2b26d531951ceaeef1e",
+      "files": [
+        "cmd/bucket-policy.go",
+        "cmd/object-handlers.go",
+        "cmd/signature-v4-utils.go",
+        "cmd/signature-v4.go",
+        "internal/http/headers.go"
+      ]
+    },
+    {
+      "commit": "a164e1dda1bbb58445b19e3df32c5286b17974b6",
+      "files": [
+        "cmd/admin-handlers-users.go"
+      ]
+    },
+    {
+      "commit": "87d8b5967f7d5b1d3be5c5b6905b0e64653539ff",
+      "files": [
+        "cmd/bucket-policy.go",
+        "cmd/signature-v4-utils.go",
+        "cmd/signature-v4.go",
+        "internal/http/headers.go"
+      ]
+    },
+    {
+      "commit": "c4b5e1cb45265220604a4dea16aeabb3d8c06c40",
+      "files": [
+        "cmd/auth-handler.go"
+      ]
+    },
+    {
+      "commit": "58735ee3829e36e24735587e2212b97c4149e0d1",
+      "files": [
+        "cmd/admin-handlers-users.go"
+      ]
+    },
+    {
+      "commit": "229fe2b3c3d38345927992c6ab2d81bc5201f0a8",
+      "files": [
+        "cmd/admin-handlers-users.go"
+      ]
+    },
+    {
+      "commit": "b73581b05d4f739284b41ed577a3460ce63b0938",
+      "files": [
+        "cmd/encryption-v1.go",
+        "cmd/erasure-object.go"
+      ]
+    },
+    {
+      "commit": "eee05a17c34a07cebb27220d12697be74c8bd617",
+      "files": [
+        "cmd/admin-handlers-users.go"
+      ]
+    },
+    {
+      "commit": "474cd5801e4e242d27a68cd0ada8a477a86d42e1",
+      "files": [
+        "cmd/object-handlers.go"
+      ]
+    },
+    {
+      "commit": "21870fa2e7f345ae92ed05ac834b1bc55bee0ff8",
+      "files": [
+        "cmd/object-handlers.go"
+      ]
+    },
+    {
+      "commit": "74c97d005d6d5b74a2037636df33f40636672282",
+      "files": [
+        "cmd/object-handlers.go"
+      ]
+    },
+    {
+      "commit": "938603458d7af34ddf7d6a59b50a716e4cca13ba",
+      "files": [
+        "cmd/bucket-object-lock.go",
+        "cmd/encryption-v1.go",
+        "cmd/handler-utils.go",
+        "cmd/object-api-options.go",
+        "cmd/object-handlers.go",
+        "cmd/object-multipart-handlers.go",
+        "cmd/replication-trust.go",
+        "internal/bucket/object/lock/lock.go"
+      ],
+      "adaptation": "Omit Silo-only per-bucket CORS changes; retain MinIO global CORS behavior. Merge replication trust into original MinIO handlers without unrelated copy-encryption helpers."
+    },
+    {
+      "commit": "c9ad746732e1f1fd7140f83fc7b309a6b1e43126",
+      "files": [
+        "cmd/object-handlers.go"
+      ]
+    },
+    {
+      "commit": "ff44527a3ce7d39e4a9343ef4dc933b95198d94d",
+      "files": [
+        "cmd/auth-handler.go",
+        "cmd/object-handlers.go",
+        "cmd/replication-trust.go"
+      ]
+    },
+    {
+      "commit": "ab3ae99ca30c7abb0f20b68fb2e6af29ccc6d071",
+      "files": [
+        "cmd/object-handlers.go"
+      ]
+    },
+    {
+      "commit": "04b097fd9ff24c909a4cadde2b9b253b7b7ab847",
+      "files": [
+        "cmd/object-handlers.go",
+        "cmd/replication-trust.go"
+      ]
+    },
+    {
+      "commit": "75a6734e49524f6c4702c60e1cf7d038d2c0d0cf",
+      "files": [
+        "cmd/auth-handler.go",
+        "cmd/bucket-handlers.go",
+        "cmd/object-handlers.go"
+      ]
+    },
+    {
+      "commit": "dee2c3a02b4fd61739508eab29bf4f852048e416",
+      "files": [
+        "cmd/auth-handler.go",
+        "cmd/bucket-handlers.go"
+      ]
+    },
+    {
+      "commit": "76195f1c6809b1504d2ccdcc240e137eaf21dc9c",
+      "files": [
+        "cmd/object-handlers.go",
+        "cmd/object-multipart-handlers.go",
+        "cmd/replication-trust.go"
+      ]
+    },
+    {
+      "commit": "2616d43fbc3400a02cc1e6f9299e26ae8b2e71a6",
+      "files": [
+        "cmd/admin-handlers-idp-ldap.go",
+        "cmd/admin-handlers-users.go"
+      ]
+    },
+    {
+      "commit": "9954392605827b213877c45262c741e638598dd8",
+      "files": [
+        "cmd/admin-handlers-users.go"
+      ]
+    },
+    {
+      "commit": "162ded3438f45b94a2195ff7996989ee7036b3c9",
+      "files": [
+        "internal/config/config.go",
+        "internal/config/notify/help.go",
+        "internal/config/notify/legacy.go",
+        "internal/config/notify/parse.go",
+        "internal/event/target/nats.go"
+      ]
+    },
+    {
+      "commit": "fe6dc47804e9fdce2711756a9c3d9840e2d4d40a",
+      "files": [
+        "cmd/common-main.go",
+        "internal/config/identity/ldap/config.go",
+        "internal/config/trustedproxies.go",
+        "internal/handlers/forwarder.go",
+        "internal/handlers/proxy.go"
+      ]
+    },
+    {
+      "commit": "f1ba68358265efd2cd937e9a9929c1df1a49301c",
+      "files": [
+        "cmd/config-migrate.go",
+        "cmd/server-main.go",
+        "internal/config/notify/legacy.go"
+      ],
+      "adaptation": "Retain MinIO product name in migration errors."
+    },
+    {
+      "commit": "3196480da93ebe7583677e64848cc5afa4dada18",
+      "files": [
+        "cmd/auth-handler.go",
+        "cmd/batch-handlers.go",
+        "cmd/bucket-handlers.go",
+        "cmd/bucket-object-lock.go",
+        "cmd/erasure-multipart.go",
+        "cmd/erasure-object.go",
+        "cmd/erasure-server-pool.go",
+        "cmd/erasure-sets.go",
+        "cmd/object-api-options.go",
+        "cmd/object-handlers.go",
+        "cmd/object-multipart-handlers.go"
+      ],
+      "adaptation": "SN-2026-015 retention authorization and SN-2026-016 destination-lock overwrite checks. The initial irulast release rejects all non-single-pool configurations before storage initialization; it does not claim multi-pool reconciliation support. Silo-only replicaObjectInfo/ReplicaLockReconcile integration is not imported. Existing trusted replication and internal movement flags are preserved through copy adapters."
+    },
+    {
+      "commit": "f653a6ea0399dc3b3e597ddbb64ed1604be346c0",
+      "files": [
+        "cmd/iam-store.go",
+        "cmd/iam.go",
+        "cmd/peer-rest-server.go"
+      ]
+    },
+    {
+      "commit": "709d50a916bf3311eda2b3882ac5f2a0251f4223",
+      "files": [
+        "cmd/admin-router.go",
+        "cmd/iam-etcd-store.go",
+        "cmd/iam-group-revision.go",
+        "cmd/iam-object-store.go",
+        "cmd/iam-replication-protocol.go",
+        "cmd/iam-revision-index.go",
+        "cmd/iam-revision.go",
+        "cmd/iam-store.go",
+        "cmd/iam.go",
+        "cmd/metrics-v3-cluster-iam.go",
+        "cmd/metrics-v3.go",
+        "cmd/peer-rest-server.go",
+        "cmd/site-replication.go",
+        "cmd/sts-handlers.go"
+      ],
+      "adaptation": "Retain historical MinIO imports; no Silo product or module migration."
+    },
+    {
+      "commit": "7b4cacc392994f72817d59eff2b6bbd919996741",
+      "files": [
+        "cmd/iam-group-revision.go",
+        "cmd/iam-replication-protocol.go",
+        "cmd/iam-revision-index.go",
+        "cmd/iam-revision.go"
+      ],
+      "adaptation": "Retain historical MinIO imports; no Silo product or module migration."
+    },
+    {
+      "commit": "0cd388c666f8211f552604ae73448a066e9c25ce",
+      "files": [
+        "cmd/iam-replication-protocol.go",
+        "cmd/iam-revision.go",
+        "cmd/iam-store.go",
+        "cmd/iam.go"
+      ],
+      "adaptation": "Retain historical MinIO imports; no Silo product or module migration."
+    },
+    {
+      "commit": "9faeb7a1147435aa7ebc02bb997837ddfbdd2a81",
+      "files": [
+        "cmd/iam-object-store.go"
+      ],
+      "adaptation": "Retain historical MinIO imports; no Silo product or module migration."
+    },
+    {
+      "commit": "625c11e7e12b354bd8e028c1dede7fd200ef7021",
+      "files": [
+        "cmd/iam-object-store.go"
+      ],
+      "adaptation": "Retain historical MinIO imports; no Silo product or module migration."
+    },
+    {
+      "commit": "1b5477f3df87924712ad8dc580c8f8eac63eda2d",
+      "files": [
+        "cmd/config-migrate.go",
+        "cmd/config.go",
+        "cmd/iam-etcd-store.go",
+        "cmd/iam-object-store.go",
+        "cmd/iam-store.go",
+        "internal/config/crypto.go",
+        "internal/crypto/sse-s3.go",
+        "internal/kms/kes.go",
+        "internal/config/crypto_test.go"
+      ],
+      "adaptation": "Retain historical MinIO imports; no Silo product or module migration."
+    },
+    {
+      "commit": "1e3ab56b064bf4d56eee636fb77ac5af229f92ef",
+      "files": [
+        "cmd/iam-store.go"
+      ],
+      "adaptation": "Retain historical MinIO imports; no Silo product or module migration."
+    },
+    {
+      "commit": "71a1631f13835cc7f3bdceaa79027190393e60ef",
+      "files": [
+        "cmd/bucket-object-lock.go"
+      ],
+      "adaptation": "Propagate object-lock preflight read failures; retain write-lock checks at commit time. No vulnerability reproduction fixtures copied."
+    }
+  ],
+  "shared_package": {
+    "repository": "https://github.com/irulast/minio-pkg",
+    "source": "https://github.com/pgsty/silo-pkg",
+    "source_commit": "0416eb1f450536ca2cc3592c2c2a06a3df88d4e0",
+    "compatibility_commit": "92d17399c066ba292607d18ab68fd1d85a6de939",
+    "adaptation": "Historical MinIO module and import paths retained"
+  },
+  "console": {
+    "repository": "https://github.com/irulast/minio-console",
+    "source_commit": "2017f33b26e1",
+    "compatibility_commit": "66f34de5be44dc49f10f82e80c5b06b4cf00a9d7",
+    "advisory": "SN-2026-014",
+    "backport": "https://github.com/pgsty/silo-console/pull/56",
+    "backport_commit": "56dfe455ac2f58fd19dc3cc9751248c382380d77",
+    "adaptation": "Retain MinIO Console API and original HTTP client constructor."
+  },
+  "owned_redaction_fix": {
+    "advisory": "SN-2026-019",
+    "reason": "Referenced HasSensitiveKeys commit is unavailable and original MinIO uses help-schema metadata.",
+    "files": [
+      "internal/config/config.go",
+      "internal/config/credential_redaction_test.go"
+    ],
+    "behavior": "Credential-name fallback on redacted diagnostics/config/env responses; retain authorized raw recovery exports."
+  },
+  "supported_storage_topology": {
+    "erasure_pools": 1,
+    "enforcement": "newErasureServerPools rejects all other counts before opening storage",
+    "reason": "Multi-pool lock/reconciliation adaptation is not validated for this first maintenance release."
+  }
+}

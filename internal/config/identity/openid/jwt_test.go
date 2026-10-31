@@ -19,9 +19,9 @@ package openid
 
 import (
 	"bytes"
+	"crypto"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -88,7 +88,7 @@ func initJWKSServer() *httptest.Server {
 	return server
 }
 
-func TestJWTHMACType(t *testing.T) {
+func TestJWTHMACRejected(t *testing.T) {
 	server := initJWKSServer()
 	defer server.Close()
 
@@ -109,7 +109,6 @@ func TestJWTHMACType(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println(token)
 
 	u1, err := xnet.ParseHTTPURL(server.URL)
 	if err != nil {
@@ -118,7 +117,7 @@ func TestJWTHMACType(t *testing.T) {
 
 	pubKeys := publicKeys{
 		RWMutex: &sync.RWMutex{},
-		pkMap:   map[string]any{},
+		pkMap:   map[string]crypto.PublicKey{},
 	}
 	pubKeys.add("76b95ae5-33ef-4283-97b7-d2a85dc2d8f4", []byte("WNGvKVyyNmXq0TraSvjaDN9CtpFgx35IXtGEffMCPR0"))
 
@@ -146,8 +145,8 @@ func TestJWTHMACType(t *testing.T) {
 	}
 
 	var claims jwtgo.MapClaims
-	if err = cfg.Validate(t.Context(), DummyRoleARN, token, "", "", claims); err != nil {
-		t.Fatal(err)
+	if err = cfg.Validate(t.Context(), DummyRoleARN, token, "", "", claims); err == nil {
+		t.Fatal("OIDC must reject symmetric signing methods")
 	}
 }
 
@@ -164,7 +163,7 @@ func TestJWT(t *testing.T) {
 
 	pubKeys := publicKeys{
 		RWMutex: &sync.RWMutex{},
-		pkMap:   map[string]any{},
+		pkMap:   map[string]crypto.PublicKey{},
 	}
 	err := pubKeys.parseAndAdd(bytes.NewBuffer([]byte(jsonkey)))
 	if err != nil {
