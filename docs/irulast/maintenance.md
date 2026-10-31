@@ -41,17 +41,21 @@ The removed ReadMultiple endpoint has no production caller in the deployed
 
 ## Remaining release review
 
-The initial candidate does not yet close the full current advisory ledger.
+The candidate must not be called remediated until its release gates pass.
 The second patch batch adds SSE-C attribute checks (SN-2026-007), the later
 replication-trust corrections (008), explicit-version delete authorization (010),
 and delegated-admin boundaries (017), including their compatibility follow-ups.
-It also validates bare-ARN policies on writes (005). These additions still need
-their own successful CI run. Before production promotion, finish
-overwrite protection (016), and validate
-the owned console sharing-proxy backport (014). The retention-authorization
+It also validates bare-ARN policies on writes (005). The authorization batch passed
+cluster CI. The current combined candidate still needs fresh CI and restored-storage
+validation, including the owned console sharing-proxy backport (014). The retention-authorization
 repair (015) now checks the requested retention action before reading state and
 requires a separate bypass permission when weakening active governance retention.
-The overwrite repair (016) is still blocked on its multi-pool locking adaptation.
+The overwrite repair (016) rechecks the destination under its write lock, rejects
+caller-selected version IDs outside trusted replication, and propagates failed
+preflight reads. This first release supports **exactly one erasure pool**. The
+server rejects any other pool count before initializing storage. Both irulast
+production stores use one pool. Multi-pool locking/reconciliation is not claimed
+as supported; removing this startup guard requires a separately validated port.
 Durable IAM revocation (013), scoped STS revocation, and the subsequent reload,
 long-name and policy-reset corrections are backported. An ordinary IAM lifecycle
 check covers account creation, persisted reads across restart, deletion inventory
@@ -72,6 +76,9 @@ that these server-logic findings are fixed. The primary CVE patch inventory abov
 must not be reported as complete remediation or as a deployed release.
 
 ## Build and promotion
+
+All builds, tests, dependency resolution, and recovery data remain on cluster
+resources. Do not use workstation Docker or download recovery archives locally.
 
 The private CI repository accepts an explicit 40-character source commit and
 builds it on `mke-python`. It runs ordinary storage/serialization tests, a compile

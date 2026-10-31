@@ -22,6 +22,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/minio/minio/internal/auth"
 	objectlock "github.com/minio/minio/internal/bucket/object/lock"
@@ -245,6 +246,48 @@ func enforceRetentionBypassForPut(ctx context.Context, r *http.Request, oi Objec
 	}
 }
 
+// checkObjectLockedForOverwrite re-checks under the object write lock whether an
+// in-place write to the null version (such as a directory object) would
+// overwrite a locked version in an Object Lock bucket.
+func checkObjectLockedForOverwrite(ctx context.Context, bucket, object string, getObjectInfoFn GetObjectInfoFn) error {
+	if isMinioMetaBucketName(bucket) {
+		return nil
+	}
+	retentionCfg, err := globalBucketObjectLockSys.Get(bucket)
+	if err != nil {
+		return err
+	}
+	if !retentionCfg.LockEnabled {
+		return nil
+	}
+	objInfo, err := getObjectInfoFn(ctx, bucket, object, ObjectOptions{
+		VersionID:  nullVersionID,
+		NoLock:     true,
+		NoAuditLog: true,
+	})
+	if err != nil {
+		if isErrObjectNotFound(err) || isErrVersionNotFound(err) || errors.As(err, &MethodNotAllowed{}) {
+			return nil
+		}
+		return err
+	}
+	if objectlock.GetObjectLegalHoldMeta(objInfo.UserDefined).Status == objectlock.LegalHoldOn {
+		return ObjectLocked{Bucket: bucket, Object: decodeDirObject(object), VersionID: nullVersionID}
+	}
+	r := objectlock.GetObjectRetentionMeta(objInfo.UserDefined)
+	if r.Mode == objectlock.RetCompliance || r.Mode == objectlock.RetGovernance {
+		t, err := objectlock.UTCNowNTP()
+		if err != nil {
+			internalLogIf(ctx, err, logger.WarningKind)
+			return ObjectLocked{Bucket: bucket, Object: decodeDirObject(object), VersionID: nullVersionID}
+		}
+		if r.RetainUntilDate.After(t) {
+			return ObjectLocked{Bucket: bucket, Object: decodeDirObject(object), VersionID: nullVersionID}
+		}
+	}
+	return nil
+}
+
 // checkPutObjectLockAllowed enforces object retention policy and legal hold policy
 // for requests with WORM headers
 // See https://docs.aws.amazon.com/AmazonS3/latest/dev/object-lock-managing.html for the spec.
@@ -282,15 +325,23 @@ func checkPutObjectLockAllowed(ctx context.Context, rq *http.Request, bucket, ob
 		return mode, retainDate, legalHold, toAPIErrorCode(ctx, err)
 	}
 
+	if isDirObject(object) && opts.VersionID == "" {
+		opts.VersionID = nullVersionID
+	}
 	if opts.VersionID != "" && !replicaTrusted {
-		if objInfo, err := getObjectInfoFn(ctx, bucket, object, opts); err == nil {
+		objInfo, err := getObjectInfoFn(ctx, bucket, object, opts)
+		if err != nil {
+			if !isErrObjectNotFound(err) && !isErrVersionNotFound(err) && !errors.As(err, &MethodNotAllowed{}) {
+				return mode, retainDate, legalHold, toAPIErrorCode(ctx, err)
+			}
+		} else {
 			r := objectlock.GetObjectRetentionMeta(objInfo.UserDefined)
 			t, err := objectlock.UTCNowNTP()
 			if err != nil {
 				internalLogIf(ctx, err, logger.WarningKind)
 				return mode, retainDate, legalHold, ErrObjectLocked
 			}
-			if r.Mode == objectlock.RetCompliance && r.RetainUntilDate.After(t) {
+			if (r.Mode == objectlock.RetCompliance || r.Mode == objectlock.RetGovernance) && r.RetainUntilDate.After(t) {
 				return mode, retainDate, legalHold, ErrObjectLocked
 			}
 			mode = r.Mode

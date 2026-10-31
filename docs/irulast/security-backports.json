@@ -398,10 +398,18 @@
       "commit": "3196480da93ebe7583677e64848cc5afa4dada18",
       "files": [
         "cmd/auth-handler.go",
+        "cmd/batch-handlers.go",
+        "cmd/bucket-handlers.go",
+        "cmd/bucket-object-lock.go",
+        "cmd/erasure-multipart.go",
+        "cmd/erasure-object.go",
+        "cmd/erasure-server-pool.go",
+        "cmd/erasure-sets.go",
+        "cmd/object-api-options.go",
         "cmd/object-handlers.go",
-        "cmd/bucket-object-lock.go"
+        "cmd/object-multipart-handlers.go"
       ],
-      "adaptation": "SN-2026-015 retention authorization and governance-bypass portion only. SN-2026-016 overwrite/locking changes still require a separate multi-pool adaptation."
+      "adaptation": "SN-2026-015 retention authorization and SN-2026-016 destination-lock overwrite checks. The initial irulast release rejects all non-single-pool configurations before storage initialization; it does not claim multi-pool reconciliation support. Silo-only replicaObjectInfo/ReplicaLockReconcile integration is not imported. Existing trusted replication and internal movement flags are preserved through copy adapters."
     },
     {
       "commit": "f653a6ea0399dc3b3e597ddbb64ed1604be346c0",
@@ -486,6 +494,13 @@
         "cmd/iam-store.go"
       ],
       "adaptation": "Retain historical MinIO imports; no Silo product or module migration."
+    },
+    {
+      "commit": "71a1631f13835cc7f3bdceaa79027190393e60ef",
+      "files": [
+        "cmd/bucket-object-lock.go"
+      ],
+      "adaptation": "Propagate object-lock preflight read failures; retain write-lock checks at commit time. No vulnerability reproduction fixtures copied."
     }
   ],
   "shared_package": {
@@ -512,5 +527,10 @@
       "internal/config/credential_redaction_test.go"
     ],
     "behavior": "Credential-name fallback on redacted diagnostics/config/env responses; retain authorized raw recovery exports."
+  },
+  "supported_storage_topology": {
+    "erasure_pools": 1,
+    "enforcement": "newErasureServerPools rejects all other counts before opening storage",
+    "reason": "Multi-pool lock/reconciliation adaptation is not validated for this first maintenance release."
   }
 }
